@@ -1,0 +1,3 @@
+# You might also want to exclude the entire directory of run logs/checkpoints:
+ runs/
+ runs/emotion_classifier_v1/Wav2Vec2-Freez+Dropout0.3/checkpoint.pt

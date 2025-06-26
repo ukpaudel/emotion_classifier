@@ -1,0 +1,3 @@
+runs:
+- label: Wav2Vec2-Freez+Dropout0.3
+  log_dir: runs/emotion_classifier_v1
