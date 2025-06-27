@@ -1,3 +1,11 @@
 runs:
 - label: Wav2Vec2-Freez+Dropout0.3
   log_dir: runs/emotion_classifier_v1
+- label: Wav2Vec2_unfreeze_last_layer_HD256_Dropout0.3
+  log_dir: runs/emotion_classifier_v2
+- label: Wav2Vec2_unfreeze_last_layer_HD256_Dropout0.3
+  log_dir: runs/emotion_classifier_v3/
+- label: Wav2Vec2_HD256_Dropout0.5
+  log_dir: runs/emotion_classifier_v4/
+- label: Wav2Vec2_HD256_no_freezeout_Dropout0.5
+  log_dir: runs/emotion_classifier_v5/

@@ -20,7 +20,7 @@ class EmotionModel(nn.Module):
         self.encoder_name = encoder_name
         self.num_classes = num_classes
         # Load encoder bundle components and validate API
-        print("inside EmotionModel")
+        print("Inside EmotionModel")
         encoder_bundle = load_ssl_encoder(self.encoder_name)
         print("Encoder Bundle Extracted")
         self.encoder = encoder_bundle["model"]

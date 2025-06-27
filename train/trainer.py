@@ -24,23 +24,15 @@ def train_model(model, train_loader, val_loader, config, run_name, resume_traini
     print(f'{device} will be used for the training')
     model = model.to(device)
 
+    # === SETUP PATHS ===
     log_dir = os.path.join(config['logging']['log_dir'], run_name)
     checkpoint_path = os.path.join(log_dir, "checkpoint.pt")
-    
-    # === Stores the training information to a YML file so that we can compare metrics between different models ===
-    # if config['logging'].get('track_run', True):
-    #     run_config_path = config['logging'].get('runs_config_path', 'configs/model_runs.yml')
-    #     run_label = config['logging'].get('run_label', run_name)
-    #     update_model_runs_yaml(run_config_path, log_dir, run_label)
-        
-    # === CLEAN LOG DIRECTORY IF NOT RESUMING ===
-    if not resume_training and os.path.exists(log_dir):
-        print(f"[INFO] Removing old log directory: {log_dir}")
-        shutil.rmtree(log_dir, ignore_errors=True)
+    os.makedirs(log_dir, exist_ok=True)
 
     logger = setup_logger(log_dir=log_dir, run_name=run_name)
     writer = SummaryWriter(log_dir=log_dir)
 
+    # === SETUP OPTIMIZER AND SCHEDULER ===
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=config['training']['lr'])
     scheduler = optim.lr_scheduler.OneCycleLR(
@@ -51,16 +43,51 @@ def train_model(model, train_loader, val_loader, config, run_name, resume_traini
         pct_start=0.1
     )
 
-    # === RESUME TRAINING IF CHECKPOINT EXISTS ===
+    # === CASE 1: RESUME FULL TRAINING ===
     start_epoch = 0
     best_val_acc = 0.0
-    if resume_training and os.path.exists(checkpoint_path):
-        start_epoch, best_val_acc = load_checkpoint(
-            model, optimizer, scheduler, checkpoint_path, device, logger
-        )
-    else:
-        logger.info("[INFO] Starting fresh training")
 
+    if resume_training:
+        if os.path.exists(checkpoint_path):
+            start_epoch, best_val_acc = load_checkpoint(
+                model, optimizer, scheduler, checkpoint_path, device, logger
+            )
+            logger.info(f"[INFO] Resumed training from epoch {start_epoch}")
+        else:
+            logger.warning(f"[WARN] resume_training=True but checkpoint not found at {checkpoint_path}")
+            logger.info("[INFO] Starting fresh training")
+
+    # === CASE 2: FRESH TRAINING BUT LOAD PRETRAINED ENCODER ===
+    elif config.get("pretrained_weights").get("enabled", False):
+        pretrained_path = config["pretrained_weights"].get("checkpoint_path")
+        print('TEST TEST TEST', pretrained_path, os.path.exists(pretrained_path))
+        if pretrained_path and os.path.exists(pretrained_path):
+            checkpoint = torch.load(pretrained_path, map_location=device)
+            encoder_state_dict = {
+                k.replace("encoder.", ""): v
+                for k, v in checkpoint["model_state"].items()
+                if k.startswith("encoder.")
+            }
+            model.load_state_dict(checkpoint["model_state"], strict=False)
+            #TODO if we have unfreezed a layer this doesn't work.
+            if config['model'].get('freeze_encoder'):
+                for param in model.encoder.parameters():
+                    param.requires_grad = False
+
+            model.encoder.load_state_dict(encoder_state_dict, strict=False)
+            logger.info(f"[INFO] Loaded encoder weights from {pretrained_path}")
+        else:
+            logger.warning(f"[WARN] Pretrained checkpoint not found: {pretrained_path}")
+            logger.info("[INFO] Proceeding without encoder preloading.")
+
+    # === CASE 3: FRESH TRAINING AND CLEAN LOGS ===
+    else:
+        if os.path.exists(log_dir):
+            logger.info(f"[INFO] Removing old log directory: {log_dir}")
+            shutil.rmtree(log_dir, ignore_errors=True)
+            os.makedirs(log_dir, exist_ok=True)
+
+        logger.info("[INFO] Starting fresh training")
 
     for epoch in range(start_epoch, config['training']['epochs']):
         model.train()
@@ -89,8 +116,7 @@ def train_model(model, train_loader, val_loader, config, run_name, resume_traini
             msg = f"[WARN] Failed training batch {i}: {e}"
             print(msg)
             if logger:
-              logger.war(msg)
-
+              logger.warning(msg)
             continue
             
         train_acc = 100 * correct / total

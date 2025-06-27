@@ -32,7 +32,6 @@ def run_experiment(config_path: str = "configs/config.yml"):
     # Track run in YAML registry. For example different experiments will get stored as a separate file you need to specify in yml file
     #  log_dir: "runs/emotion_classifier_v2" #this is a unique id for the training. when it reruns it overrides.
     #  run_label: "Wav2Vec2-unfreez1-layer+Dropout0.3"
-    
     if config['logging'].get('track_run', True):
         run_config_path = config['logging'].get('runs_config_path', 'configs/model_runs.yml')
         update_model_runs_yaml(run_config_path, log_dir, run_name)
@@ -72,3 +71,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     run_experiment(args.config)
+    print("To Visualize Tensboard Weights go to bash and run > tensorboard --logdir=runs and open http://localhost:6006/ ")

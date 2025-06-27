@@ -6,29 +6,28 @@ data:
 
 model:
   encoder_name: "wav2vec2"
-  dropout: 0.3
+  dropout: 0.5
   hidden_dim: 256
   num_classes: 8
   freeze_encoder: false
   unfreeze_last_n_layers: 1
 
 training:
-  batch_size: 8
-  epochs: 100
+  batch_size: 16
+  epochs: 50
   lr: 0.001
   max_lr: 0.003
   scheduler: "onecycle"
   resume: false
 
-paths:
-  run_name: "emotion_classifier_v2"
-  checkpoint_dir: "checkpoints/"
-  log_dir: "runs/"
-  misclassified_dir: "misclassified/"
+pretrained_weights: #if enabled, it starts the training using weights from the pretrained weights, specify the weight file
+  enabled: true
+  checkpoint_path: "runs/emotion_classifier_v1/Wav2Vec2-Freez+Dropout0.3/checkpoint.pt"
 
 logging:
-  log_dir: "runs/emotion_classifier_v2" #this is a unique id for the training. when it reruns it overrides.
-  run_label: "Wav2Vec2-unfreez1-layer+Dropout0.3"
+  log_dir: "runs/emotion_classifier_v5/" #this is a unique folder for the training. when it reruns it overrides and deletes the file so update it as needed.
+  run_label: "Wav2Vec2_HD256_no_freezeout_Dropout0.5" #unique id give to the training. 
   track_run: true #track different models trained so that we can plot them together.
-  runs_config_path: "configs/model_runs.yml"
-
+  runs_config_path: "configs/model_runs.yml" #where to store info about different experimentation
+  misclassified_dir: "misclassified/"
+  checkpoint_dir: "checkpoints/"
