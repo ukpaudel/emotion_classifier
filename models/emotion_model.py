@@ -38,15 +38,23 @@ class EmotionModel(nn.Module):
         if unfreeze_last_n_layers:
             # Unfreeze the last N transformer layers (if supported)
             try:
-                transformer_layers = self.encoder.transformer.layers
+                transformer_layers = self.encoder.encoder.transformer.layers
                 for layer in transformer_layers[-unfreeze_last_n_layers:]:
                     for param in layer.parameters():
                         param.requires_grad = True
+                        msg = f"[Info] Encoder layer '{self.layer}' will be trained."
+                        if logger:
+                            logger.info(msg)
             except AttributeError:
                 msg = f"[Warning] Encoder '{self.encoder_name}' does not expose transformer layers. Cannot unfreeze selectively."
                 if logger:
                     logger.warn(msg)
                 print(msg)
+
+        # # check what is trainable inside the transformer layers
+        # for name, param in self.encoder.encoder.transformer.named_parameters():
+        #     print(f"{name}: requires_grad={param.requires_grad}")
+
 
         self.classifier = AttentionClassifier(
             input_dim=self.feature_dim,

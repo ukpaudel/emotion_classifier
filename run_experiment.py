@@ -51,6 +51,9 @@ def run_experiment(config_path: str = "configs/config.yml"):
         logger=logger
 )
 
+    #print trainable layers.
+    for name, param in model.encoder.encoder.transformer.named_parameters():
+        print(f"{name}: requires_grad={param.requires_grad}")
 
     # Create dataloaders
     train_loader, val_loader = create_dataloaders(config)

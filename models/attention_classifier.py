@@ -16,10 +16,11 @@ class AttentionClassifier(nn.Module):
         self.dropout = nn.Dropout(dropout)
         self.mlp = nn.Sequential(
             
-            nn.Linear(input_dim, hidden_dim),
-            nn.GELU(),
-            nn.Dropout(dropout),
-            nn.Linear(hidden_dim, num_classes)
+            #nn.Linear(input_dim, hidden_dim),
+            #nn.GELU(),
+            #nn.Dropout(dropout),
+            #nn.Linear(hidden_dim, num_classes)
+            nn.Linear(input_dim, num_classes)
         )
 
     def forward(self, x, mask=None):
@@ -37,7 +38,7 @@ class AttentionClassifier(nn.Module):
 
         attn_weights = torch.softmax(attn_logits, dim=1).unsqueeze(-1)  # [B, T, 1]
         pooled = torch.sum(attn_weights * x, dim=1)  # [B, H]
-
+        #pooled = torch.mean(x, dim=1)        # [B, H]
         pooled = self.dropout(pooled)
         logits = self.mlp(pooled)  # [B, num_classes]
         return logits
