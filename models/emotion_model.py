@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-from models.attention_classifier import AttentionClassifier
-from utils.encoder_loader import load_ssl_encoder
+from emotion_classifier.models.attention_classifier import AttentionClassifier
+from emotion_classifier.utils.encoder_loader import load_ssl_encoder
 
 '''
 EmotionModel is a modular audio classification model designed to wrap a frozen or partially trainable
@@ -22,7 +22,9 @@ class EmotionModel(nn.Module):
         # Load encoder bundle components and validate API
         print("Inside EmotionModel")
         encoder_bundle = load_ssl_encoder(self.encoder_name)
-        print("Encoder Bundle Extracted")
+        msg = f"[Info] Encoder Bundle Extracted!!! Model Information {encoder_bundle}."
+        if logger:
+            logger.info(msg)
         self.encoder = encoder_bundle["model"]
         self.sample_rate = encoder_bundle["sample_rate"]
         self.feature_dim = encoder_bundle["feature_dim"]
@@ -31,9 +33,9 @@ class EmotionModel(nn.Module):
         if freeze_encoder:
             for param in self.encoder.parameters():
                 param.requires_grad = False
-            msg = f"Encoder '{self.encoder_name}' is frozen (no gradient updates)."
-            if logger:
-                logger.info(msg)
+            #msg = f"Encoder '{self.encoder_name}' is frozen (no gradient updates) unless we ."
+            #if logger:
+            #    logger.info(msg)
 
         if unfreeze_last_n_layers:
             # Unfreeze the last N transformer layers (if supported)
@@ -42,14 +44,18 @@ class EmotionModel(nn.Module):
                 for layer in transformer_layers[-unfreeze_last_n_layers:]:
                     for param in layer.parameters():
                         param.requires_grad = True
-                        msg = f"[Info] Encoder layer '{self.layer}' will be trained."
-                        if logger:
-                            logger.info(msg)
+
             except AttributeError:
                 msg = f"[Warning] Encoder '{self.encoder_name}' does not expose transformer layers. Cannot unfreeze selectively."
                 if logger:
                     logger.warn(msg)
                 print(msg)
+
+        # #print model info in the log file
+        for name, param in self.encoder.encoder.transformer.named_parameters():
+            msg = f"{name}: requires_grad={param.requires_grad}"
+            if logger:
+                logger.info(msg)
 
         # # check what is trainable inside the transformer layers
         # for name, param in self.encoder.encoder.transformer.named_parameters():

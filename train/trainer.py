@@ -42,7 +42,13 @@ def train_model(model, train_loader, val_loader, config, run_name, resume_traini
         epochs=config['training']['epochs'],
         pct_start=0.1
     )
-
+    if logger:
+        datasets_config = config['data']['datasets']
+        for ds_cfg in datasets_config:
+            classname = ds_cfg['class_path']
+            path = ds_cfg['data_dir']
+            logger.info(f"[INFO] Data used for trainings are  {classname} from {path}")
+    
     # === CASE 1: RESUME FULL TRAINING ===
     start_epoch = 0
     best_val_acc = 0.0
@@ -52,10 +58,12 @@ def train_model(model, train_loader, val_loader, config, run_name, resume_traini
             start_epoch, best_val_acc = load_checkpoint(
                 model, optimizer, scheduler, checkpoint_path, device, logger
             )
-            logger.info(f"[INFO] Resumed training from epoch {start_epoch}")
+            if logger:
+                logger.info(f"[INFO] Resumed training from epoch {start_epoch}")
         else:
-            logger.warning(f"[WARN] resume_training=True but checkpoint not found at {checkpoint_path}")
-            logger.info("[INFO] Starting fresh training")
+            if logger:
+                logger.warning(f"[WARN] resume_training=True but checkpoint not found at {checkpoint_path}")
+                logger.info("[INFO] Starting fresh training")
 
     # === CASE 2: FRESH TRAINING BUT LOAD PRETRAINED ENCODER ===
     elif config.get("pretrained_weights").get("enabled", False):
