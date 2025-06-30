@@ -162,6 +162,9 @@ Wav2Vec2 had poorer performance. HuBert results in increase classification accur
 With frozen encoder layers and only RAVDEV audio dataset. ![image](https://github.com/user-attachments/assets/a06e94a5-a9e8-4f12-ae0d-a7df148ec078)
 Example of Tensorboard: <img width="1000" alt="example_comparisons" src="https://github.com/user-attachments/assets/9764f031-abff-4670-a537-e574633b5f28" />
 
+Example of Inference: Both ASR text and emotions are labeled. I am not happy with the performance on the realtime audio despite the validation accuracy being high. Something ain't right...
+![image](https://github.com/user-attachments/assets/da4f1505-5996-4acc-bc7e-9d1218fd73a4)
+
 ## Author
 Uttam Paudel
 paudeluttam@gmail.com
