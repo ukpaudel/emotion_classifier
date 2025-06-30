@@ -13,20 +13,20 @@ model:
   hidden_dim: 256
   num_classes: 8
   freeze_encoder: true #if false, all layer are froozen. If true, they are all frozen, the next line will set the layers to be unfreezed.
-  unfreeze_last_n_layers: 4
+  unfreeze_last_n_layers: null
 
 training:
   batch_size: 8
-  epochs: 200
+  epochs: 50
   lr: 0.0001
-  max_lr: 0.01
+  max_lr: 0.003
   scheduler: "onecycle"
   resume: false
   val_split: 0.2
   num_workers: 2
 
 pretrained_weights: #if enabled, it starts the training using weights from the pretrained weights, specify the weight file
-  enabled: false
+  enabled: true
   checkpoint_path: "runs/emotion_classifier_v14/hubert_CREMA_ravdess_HD256_1MLP_4Enc_maxlr0p03_D0p2/checkpoint.pt"
 
 logging:

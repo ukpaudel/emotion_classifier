@@ -1,10 +1,10 @@
 model:
   class_path: emotion_classifier.models.emotion_model.EmotionModel
-  checkpoint_path: runs\emotion_classifier_v14\hubert_CREMA_ravdess_HD256_1MLP_4Enc_maxlr0p03_D0p2\checkpoint.pt
+  checkpoint_path: runs\emotion_classifier_v12\hubert_HD256_1layerMLP_attn_maxlr-0.03_Dropout0.2\checkpoint.pt
   sample_rate: 16_000
   args:
     encoder_name: hubert
-    dropout: 0.3
+    dropout: 0.2
     hidden_dim: 256
     num_classes: 8
     freeze_encoder: true
