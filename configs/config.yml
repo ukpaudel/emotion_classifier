@@ -1,10 +1,10 @@
 #config.yml
 data:
-  datasets:
-    #- class_path: data.ravdess_dataset.RAVDESSDataset
-    #  data_dir: 'data/ravdess/data'
-    - class_path: data.cremad_dataset.CREMADataset
-      data_dir: 'data/CREMA-D/data'
+  datasets: #can supply multiple dataset that are manually stored. need to create a .py file with a class
+    - class_path: data.ravdess_dataset.RAVDESSDataset
+      data_dir: 'data/ravdess/data'
+    #- class_path: data.cremad_dataset.CREMADataset
+    #  data_dir: 'data/CREMA-D/data'
   sample_rate: 16000
 
 model:
