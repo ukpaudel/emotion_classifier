@@ -1,4 +1,4 @@
-# Summary
+![image](https://github.com/user-attachments/assets/a413e65a-d330-496f-ba10-c9e840bde62c)# Summary
 
 **emotion_classifier** is a modular, production-ready Python framework for speech emotion classification. It leverages powerful self-supervised speech encoders (like Wav2Vec2 or HuBERT) with an attention-based classifier on top, allowing easy transfer learning and fine-tuning for emotion recognition tasks.
 
@@ -25,49 +25,57 @@ RAVDESS: https://www.kaggle.com/datasets/uwrfkaggler/ravdess-emotional-speech-au
 Download and extract it into data/ravdess/data/actor_1, actor_2, etc. 
 ## Folder Structure
 
+```text
 emotion_classifier/
 ├── configs/
-│ └── config.yml
-│ └── models_runs.yml
-│ └── inference_config.yml
-
+│   ├── config.yml
+│   ├── models_runs.yml
+│   └── inference_config.yml
+│
 ├── data/
-│ └── ravdess_dataset.py
-│ └── cremad_dataset.py
-│ └── dataloader.py
-│ └── collate.py
-│ └── ravdess
-    └── data/
-  └── CREMA-D
-    └── data/
+│   ├── ravdess_dataset.py
+│   ├── cremad_dataset.py
+│   ├── dataloader.py
+│   ├── collate.py
+│   ├── ravdess/
+│   │   └── data/
+│   └── CREMA-D/
+│       └── data/
+│
 ├── models/
-│ └── attention_classifier.py
-│ └── emotion_model.py
+│   ├── attention_classifier.py
+│   └── emotion_model.py
+│
 ├── runs/
-│ └── emotion_classifier_v#
-│   └── run_label #stored based on config file logging.run_label   
-│       └── checkpoint.pt #This is the store weights from the training
-│       └── events.out.tfevents. #stores tensorboard info
-│ └── example_comparisons.png
-│ └── encoder_loader.py
-│ └── run_tracker.py
-│ └── model_utils.py
-│ └── tensorboard_plot_utils.py
+│   ├── emotion_classifier_v#/
+│   │   └── run_label/  # stored based on config file logging.run_label
+│   │       ├── checkpoint.pt  # trained weights
+│   │       └── events.out.tfevents  # tensorboard logs
+│   ├── example_comparisons.png
+│   ├── encoder_loader.py
+│   ├── run_tracker.py
+│   ├── model_utils.py
+│   └── tensorboard_plot_utils.py
+│
 ├── train/
-│ └── trainer.py
+│   └── trainer.py
+│
 ├── utils/
-│ └── config.py
-│ └── logger.py
-│ └── encoder_loader.py
-│ └── run_tracker.py
-│ └── model_utils.py
-│ └── tensorboard_plot_utils.py
+│   ├── config.py
+│   ├── logger.py
+│   ├── encoder_loader.py
+│   ├── run_tracker.py
+│   ├── model_utils.py
+│   └── tensorboard_plot_utils.py
+│
 ├── inference/
-│ └── realtime_inference_withASR.py
+│   └── realtime_inference_withASR.py
+│
 ├── run_experiment.py
 ├── setup.py
 ├── README.md
 └── ...
+
 
 
 ## Architecture
@@ -150,6 +158,8 @@ see comparison between different trainings in
 ```runs\example_comparisons.png``` file. 
 Verdict: mixed results. Saw as high as closer to 80% classification accuracy with RAVDAV dataset. Adding CREMA-D dataset made the classification accuracy go hover around 70%. Unfreezing the encoder layers gave inconsistent results, for RAVDAV dataset, it increased the efficiency significantly, though I am concerned that the validation dataset was too small and the model was overfitting.
 Wav2Vec2 had poorer performance. HuBert results in increase classification accuracy with model converging with fewer epoches.
+With frozen encoder layers and only RAVDEV audio dataset. ![image](https://github.com/user-attachments/assets/a06e94a5-a9e8-4f12-ae0d-a7df148ec078)
+Example of Tensorboard: <img width="1000" alt="example_comparisons" src="https://github.com/user-attachments/assets/9764f031-abff-4670-a537-e574633b5f28" />
 
 ## Author
 Uttam Paudel
