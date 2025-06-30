@@ -154,11 +154,23 @@ To run go to the root folder ```cd emotion_classifier\emotion_classifier```
 for single audio
 ``` > python .\inference\realtime_inference_withASR.py```
 
-## Results.
-see comparison between different trainings in 
-```runs\example_comparisons.png``` file. 
-Verdict: mixed results. Saw as high as closer to 80% classification accuracy with RAVDAV dataset. Adding CREMA-D dataset made the classification accuracy go hover around 70%. Unfreezing the encoder layers gave inconsistent results, for RAVDAV dataset, it increased the efficiency significantly, though I am concerned that the validation dataset was too small and the model was overfitting.
-Wav2Vec2 had poorer performance. HuBert results in increase classification accuracy with model converging with fewer epoches.
+## Results/Verdicts.
+
+Comparison of Different Trainings (see ```runs/example_comparisons.png``` for details):
+
+- Achieved up to ~80% classification accuracy using the RAVDESS dataset alone.
+
+- Adding the CREMA-D dataset reduced classification accuracy to around 70%.
+
+- Unfreezing the encoder layers gave inconsistent results. For the RAVDESS dataset, unfreezing improved performance, but I suspect the small validation dataset may have caused overfitting.
+
+- Wav2Vec2 showed poorer performance overall.
+
+- HuBERT achieved higher classification accuracy and converged in fewer epochs when trained with frozen encoder layers on the RAVDESS dataset.
+  
+- Realtime inference  has a mixed results. Even I have trouble classifying emotions from audio. Perhaps the idea of classifying emotion from a few second long audio is an unrealistic goals? Once could train to use much longer time window, 20-30 seconds to classify the overall tone of the conversation? 
+
+
 With frozen encoder layers and only RAVDEV audio dataset. ![image](https://github.com/user-attachments/assets/a06e94a5-a9e8-4f12-ae0d-a7df148ec078)
 Example of Tensorboard: <img width="1000" alt="example_comparisons" src="https://github.com/user-attachments/assets/9764f031-abff-4670-a537-e574633b5f28" />
 
