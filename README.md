@@ -75,10 +75,11 @@ emotion_classifier/
 ├── setup.py
 ├── README.md
 └── ...
-
+```
 
 
 ## Architecture
+```
                ┌───────────────────────────────┐
                │         Waveform Input        │
                └───────────────────────────────┘
@@ -116,7 +117,7 @@ emotion_classifier/
                └───────────────────────────────┘
 
 
-
+```
 ## ⚙️ Installation
 
 ```bash
