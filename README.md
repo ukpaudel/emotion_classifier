@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/a413e65a-d330-496f-ba10-c9e840bde62c)# Summary
+# Summary
 
 **emotion_classifier** is a modular, production-ready Python framework for speech emotion classification. It leverages powerful self-supervised speech encoders (like Wav2Vec2 or HuBERT) with an attention-based classifier on top, allowing easy transfer learning and fine-tuning for emotion recognition tasks.
 
