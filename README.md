@@ -23,6 +23,28 @@ It is designed to be configuration-driven, making training, evaluation, and expe
 ## Install Dataset
 RAVDESS: https://www.kaggle.com/datasets/uwrfkaggler/ravdess-emotional-speech-audio
 Download and extract it into data/ravdess/data/actor_1, actor_2, etc. 
+
+## 📂 Data Splitting and Preparation
+This repository supports emotion classification using multiple speech emotion datasets, including RAVDESS and CREMA-D, with the ability to combine them in a unified training pipeline.
+
+Each dataset contains multiple emotion-labeled audio clips spoken by the same actor. To ensure a fair evaluation, we use a speaker-independent split strategy:
+
+The dataset classes (e.g., RAVDESSDataset, CREMADataset) parse and store the actor ID from each file name during initialization.
+
+During dataloader creation, the create_dataloaders function uses sklearn.model_selection.GroupShuffleSplit to split samples into training and validation sets, while guaranteeing that no speaker appears in both.
+
+This prevents data leakage, avoiding the model from memorizing speaker-specific characteristics rather than truly learning emotion features.
+
+If a dataset does not provide actor ID metadata, the code gracefully falls back to a standard random split, maintaining compatibility for future datasets.
+
+For example, in the RAVDESS dataset:
+
+File names like 03-01-01-01-01-01-01.wav contain the actor identifier as the last segment (01 in this case).
+
+In CREMA-D, filenames like 1001_IEO_HAP_HI.wav encode the actor ID in the first segment (1001).
+
+By leveraging grouped splitting, the framework guarantees speaker-independent evaluation and robust generalization to unseen speakers, which is crucial for real-world emotion recognition systems.
+
 ## Folder Structure
 
 ```text
