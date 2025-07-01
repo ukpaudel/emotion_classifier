@@ -3,36 +3,39 @@ data:
   datasets: #can supply multiple dataset that are manually stored. need to create a .py file with a class
     - class_path: data.ravdess_dataset.RAVDESSDataset
       data_dir: 'data/ravdess/data'
-    #- class_path: data.cremad_dataset.CREMADataset
-    #  data_dir: 'data/CREMA-D/data'
+    - class_path: data.cremad_dataset.CREMADataset
+      data_dir: 'data/CREMA-D/data'
   sample_rate: 16000
+  noise_dir: 'data/musan_noise' #directory with noise to add to the training waverform.
 
 model:
   encoder_name: "hubert" #wav2vec2
-  dropout: 0.2
+  dropout: 0.3
   hidden_dim: 256
   num_classes: 8
-  freeze_encoder: true #if false, all layer are froozen. If true, they are all frozen, the next line will set the layers to be unfreezed.
-  unfreeze_last_n_layers: null
+  freeze_encoder: true #if false, all layer are unfroozen. If true, they are all frozen, the next line will set the layers to be unfreezed.
+  unfreeze_last_n_layers: 3
 
 training:
   batch_size: 8
-  epochs: 50
+  epochs: 5
   lr: 0.0001
   max_lr: 0.003
-  scheduler: "onecycle"
-  resume: false
+  min_lr: 0.00001
+  scheduler: "cosine_warm_restarts" #cosine_warm_restarts, onecycle, cosine
+  resume_training: false #this will load weights, schedular from checkpoint_path and rerun it.
   val_split: 0.2
   num_workers: 2
 
 pretrained_weights: #if enabled, it starts the training using weights from the pretrained weights, specify the weight file
-  enabled: true
-  checkpoint_path: "runs/emotion_classifier_v14/hubert_CREMA_ravdess_HD256_1MLP_4Enc_maxlr0p03_D0p2/checkpoint.pt"
+  enabled: false
+  checkpoint_path: "runs/emotion_classifier_v16/hubert_H256_2MLP_3Enc_noisedata_cosinewrmst_D0p3/checkpoint.pt"
 
 logging:
-  log_dir: "runs/emotion_classifier_v15/" #this is a unique folder for the training. when it reruns it overrides and deletes the file so update it as needed.
-  run_label: "hubert_CREMAONLY_HD256_1MLP_4Enc_maxlr0p03_D0p2" #unique id give to the training. 
+  log_dir: "runs/emotion_classifier_v18/" #this is a unique folder for the training. when it reruns it overrides and deletes the log file so update it as needed.
+  run_label: "hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3" #unique id give to the training. 
   track_run: true #track different models trained so that we can plot them together.
   runs_config_path: "configs/model_runs.yml" #where to store info about different experimentation
   misclassified_dir: "misclassified/"
   checkpoint_dir: "checkpoints/"
+  save_misclassified: true #save misclassified audios

@@ -1,19 +1,27 @@
-# ravdess_dataset.py
 import os
 import torch
 import torchaudio
+import torchaudio.transforms as T
 from torch.utils.data import Dataset
+from emotion_classifier.utils.add_noise_snr import _add_noise_with_snr
+import random
+from .data_augmentations import apply_augmentations 
 
 class RAVDESSDataset(Dataset):
     '''
-    creates indexable dataset from RAVDESDataset
+    creates indexable dataset from RAVDESS
+
+    The dataset implements on-the-fly data augmentation during training. 
+    This means that for each audio file retrieved during a training epoch, 
+    random transformations are applied to the waveform.
     '''
-    def __init__(self, dir_link, sample_rate=16000):
+    def __init__(self, dir_link, sample_rate=16000, is_train=True, noise_dir=None):
         self.dir_link = dir_link
         self.sample_rate = sample_rate
+        self.noise_dir = noise_dir
         self.error_log_path = os.path.join(dir_link, "bad_files.log")
-        os.makedirs(dir_link, exist_ok=True)
-
+        os.makedirs(os.path.dirname(self.error_log_path), exist_ok=True)
+        self.actor_ids = [] 
         self.audio_files = []
         self._collect_audio_files()
 
@@ -22,11 +30,16 @@ class RAVDESSDataset(Dataset):
             5: 'Angry', 6: 'Fearful', 7: 'Disgust', 8: 'Surprised'
         }
 
+        self.is_train = is_train
+
     def _collect_audio_files(self):
         for root, _, files in os.walk(self.dir_link):
             for file in files:
                 if file.endswith('.wav'):
                     self.audio_files.append(os.path.join(root, file))
+                    actor_id = file.split('-')[-1].split('.')[0]
+                    self.actor_ids.append(actor_id)
+
 
     def __len__(self):
         return len(self.audio_files)
@@ -40,27 +53,40 @@ class RAVDESSDataset(Dataset):
     def _extract_label_and_audio(self, file):
         basename = os.path.basename(file)
         nameonly = os.path.splitext(basename)[0]
-        labels = nameonly.split('-')
-        _, _, emotion, _, _, _, _ = labels
-      #modality, voice, emotion, intensity, statement, repetition, actor = labels #returns string
+        labels_parts = nameonly.split('-')
+        emotion_raw = labels_parts[2] 
+
+        try:
+            emotion_label = int(emotion_raw)
+        except ValueError:
+            raise ValueError(f"Could not parse emotion ID from filename: {file}. Expected an integer at labels_parts[2]. Got: '{emotion_raw}'")
+
+        if emotion_label not in self.emotion_map:
+             raise ValueError(f"Emotion label {emotion_label} from file {file} not found in emotion_map.")
 
         waveform, sample_rate = torchaudio.load(file)
         if waveform.shape[0] > 1:
-            waveform = waveform.mean(dim=0, keepdim=True)  # Convert to mono
-
+            waveform = waveform.mean(dim=0, keepdim=True)
         waveform = self._resample_if_needed(waveform, sample_rate)
-        return waveform, int(emotion) - 1  # Zero-indexed emotion
+        
+        return waveform, emotion_label - 1 
 
     def __getitem__(self, index):
         file = self.audio_files[index]
         try:
             waveform, emotion = self._extract_label_and_audio(file)
-            return waveform, emotion
+
+            # Apply augmentations only if in training mode
+            if self.is_train:
+                # Call the external augmentation function
+                waveform = apply_augmentations(waveform, self.sample_rate, self.noise_dir)
+            return waveform.squeeze(0).detach(), emotion
+        
         except Exception as e:
             print(f'Error with file {file}, error: {e}')
             with open(self.error_log_path, "a", encoding="utf-8") as f:
                 f.write(f"{file} | Error: {str(e)}\n")
-            return None
+            return None 
 
     def get_emotion_name(self, label):
-        return self.emotion_map[label + 1]  # Adjust for 0-indexing
+        return self.emotion_map.get(label + 1)

@@ -2,6 +2,7 @@ import os
 import yaml
 import torch
 import logging
+from emotion_classifier.utils.confusion_animation import animate_confusion, plot_final_confusion
 from emotion_classifier.utils.config import load_config
 from emotion_classifier.utils.logger import setup_logger
 from emotion_classifier.utils.run_tracker import update_model_runs_yaml
@@ -64,6 +65,11 @@ def run_experiment(config_path: str = "configs/config.yml"):
 
     # Plot results
     plot_from_tensorboard(config_path)
+
+    # plot confusion
+    log_dir_confusion = os.path.join(config['logging']['log_dir'], run_name)
+    animate_confusion(log_dir_confusion)
+    plot_final_confusion(log_dir_confusion)
 
 
 if __name__ == "__main__":

@@ -17,3 +17,7 @@ runs:
   log_dir: runs/emotion_classifier_v14/
 - label: hubert_CREMAONLY_HD256_1MLP_4Enc_maxlr0p03_D0p2
   log_dir: runs/emotion_classifier_v15/
+- label: hubert_CREMA_Ravdes_H256_2MLP_3Enc_noisedata_cosinewrmst_D0p3
+  log_dir: runs/emotion_classifier_v16/
+- label: hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3
+  log_dir: runs/emotion_classifier_v18/

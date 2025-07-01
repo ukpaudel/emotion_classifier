@@ -41,7 +41,8 @@ class RealTimeEmotionAndASR:
 
         self.total_samples_seen = 0
         self.samples_since_last_classify = 0
-        self.classify_interval = int(sample_rate * 2)
+        self.classify_interval = int(sample_rate * 5)
+        self.averaging_chuncks = int(self.window_size/self.classify_interval)
 
         # load ASR model
 
@@ -106,7 +107,7 @@ class RealTimeEmotionAndASR:
 
     def classify_and_transcribe(self):
         buffer_rms = np.sqrt(np.mean(self.buffer ** 2))
-        if buffer_rms < 0.04:
+        if buffer_rms < 0.01:
             print(f"[INFO] Skipping classification and ASR (low RMS={buffer_rms:.5f})")
             self.current_probs = 0*self.current_probs
             self.current_text = ""
@@ -127,7 +128,7 @@ class RealTimeEmotionAndASR:
         # EMOTION
         chunk_size = self.sample_rate
         chunk_preds = []
-        for i in range(5):
+        for i in range(self.averaging_chuncks ):
             start = i * chunk_size
             end = start + chunk_size
             chunk = self.buffer[start:end]

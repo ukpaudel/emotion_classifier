@@ -4,9 +4,13 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
+import numpy as np
+import torchvision
+import PIL.Image
 from utils.logger import setup_logger
 from utils.model_utils import save_checkpoint, load_checkpoint, save_misclassified_audio
 from utils.run_tracker import update_model_runs_yaml
+from sklearn.metrics import confusion_matrix
 """
 trainer.py
 
@@ -18,6 +22,10 @@ Handles training and validation loop with support for:
 
 Assumes: model implements forward(x, lengths)
 """
+EMOTION_MAP = {
+        0: 'Neutral', 1: 'Calm', 2: 'Happy', 3: 'Sad',
+        4: 'Angry', 5: 'Fearful', 6: 'Disgust', 7: 'Surprised'
+    }
 
 def train_model(model, train_loader, val_loader, config, run_name, resume_training=False):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -35,13 +43,32 @@ def train_model(model, train_loader, val_loader, config, run_name, resume_traini
     # === SETUP OPTIMIZER AND SCHEDULER ===
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=config['training']['lr'])
-    scheduler = optim.lr_scheduler.OneCycleLR(
-        optimizer,
-        max_lr=config['training']['max_lr'],
-        steps_per_epoch=len(train_loader),
-        epochs=config['training']['epochs'],
-        pct_start=0.1
-    )
+
+    if config['training']['scheduler'] == "onecycle":
+        scheduler = optim.lr_scheduler.OneCycleLR(
+            optimizer,
+            max_lr=config['training']['max_lr'],
+            steps_per_epoch=len(train_loader),
+            epochs=config['training']['epochs'],
+            pct_start=0.1
+        )
+    elif config['training']['scheduler'] == "cosine":
+        scheduler = optim.lr_scheduler.CosineAnnealingLR(
+            optimizer,
+            T_max=config['training']['epochs'],
+            eta_min=config['training'].get("min_lr", 1e-6)
+        )
+    elif config['training']['scheduler'] == "cosine_warm_restarts":
+        scheduler = optim.lr_scheduler.CosineAnnealingWarmRestarts(
+            optimizer,
+            T_0=10,
+            T_mult=2,
+            eta_min=config['training'].get("min_lr", 1e-6)
+        )
+    else:
+        scheduler = None  # or raise error
+
+    
     if logger:
         datasets_config = config['data']['datasets']
         for ds_cfg in datasets_config:
@@ -68,7 +95,6 @@ def train_model(model, train_loader, val_loader, config, run_name, resume_traini
     # === CASE 2: FRESH TRAINING BUT LOAD PRETRAINED ENCODER ===
     elif config.get("pretrained_weights").get("enabled", False):
         pretrained_path = config["pretrained_weights"].get("checkpoint_path")
-        print('TEST TEST TEST', pretrained_path, os.path.exists(pretrained_path))
         if pretrained_path and os.path.exists(pretrained_path):
             checkpoint = torch.load(pretrained_path, map_location=device)
             encoder_state_dict = {
@@ -97,6 +123,8 @@ def train_model(model, train_loader, val_loader, config, run_name, resume_traini
 
         logger.info("[INFO] Starting fresh training")
 
+    # === LET THE TRAINING BEGIN ===
+    all_confusions = {}
     for epoch in range(start_epoch, config['training']['epochs']):
         model.train()
         total_loss = 0.0
@@ -139,6 +167,8 @@ def train_model(model, train_loader, val_loader, config, run_name, resume_traini
         # === VALIDATION ===
         model.eval()
         val_correct, val_total = 0, 0
+        all_preds = []
+        all_labels = []
 
         with torch.no_grad():
             for waveforms, labels, lengths in val_loader:
@@ -149,10 +179,41 @@ def train_model(model, train_loader, val_loader, config, run_name, resume_traini
                 val_correct += (predicted == labels).sum().item()
                 val_total += labels.size(0)
 
+                # accumulate for confusion
+                all_preds.extend(predicted.cpu().numpy())
+                all_labels.extend(labels.cpu().numpy())
+
                 # Optional: save misclassified examples
-                if config['training'].get("save_misclassified"):
+                if config['logging'].get("save_misclassified"):
                     save_misclassified_audio(waveforms, labels, predicted, lengths, config, epoch, logger)
 
+        # calculate confusion matrix and convert it to a tensorboard image and log it
+        cm = confusion_matrix(all_labels, all_preds)
+        fig, ax = plt.subplots(figsize=(8,8))
+        emotion_labels = [EMOTION_MAP[i] for i in range(len(EMOTION_MAP))]
+        sns.heatmap(cm, annot=True, fmt="d", cmap="Blues",
+                    xticklabels=emotion_labels,
+                    yticklabels=emotion_labels, ax=ax)
+        ax.set_xlabel("Predicted")
+        ax.set_ylabel("True")
+        ax.set_title(f"Confusion Matrix Epoch {epoch+1}")
+
+        # convert to tensorboard image
+        buf = io.BytesIO()
+        plt.savefig(buf, format='png')
+        buf.seek(0)
+        image = PIL.Image.open(buf)
+        image = torchvision.transforms.ToTensor()(image)
+        writer.add_image("ConfusionMatrix", image, epoch)
+        plt.close(fig)
+
+        # save confusion matrix for this epoch into dict
+        all_confusions[epoch] = cm
+
+        # save confusion matrix as numpy file
+        np.save(os.path.join(log_dir, "confusions_all_epochs.npy"), all_confusions)
+
+        
         val_acc = 100 * val_correct / val_total
         writer.add_scalar("Accuracy/Val", val_acc, epoch)
 

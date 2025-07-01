@@ -15,12 +15,10 @@ class AttentionClassifier(nn.Module):
         self.attn = nn.Linear(input_dim, 1)  # [B, T, H] -> [B, T, 1]
         self.dropout = nn.Dropout(dropout)
         self.mlp = nn.Sequential(
-            
-            #nn.Linear(input_dim, hidden_dim),
-            #nn.GELU(),
-            #nn.Dropout(dropout),
-            #nn.Linear(hidden_dim, num_classes)
-            nn.Linear(input_dim, num_classes)
+            nn.Linear(input_dim, hidden_dim),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, num_classes)
         )
 
     def forward(self, x, mask=None):
