@@ -49,7 +49,8 @@ For robust model training, audio augmentation with background noise is applied. 
     **Dataset Link:** [Kaggle MUSAN Dataset](https://www.kaggle.com/code/kerneler/starter-musan-noise-b2c57001-3/input) (assuming this link refers to a source from which the MUSAN data can be downloaded or accessed).
 
     The `noise_dir` specified in the configuration (e.g., `config['data']['noise_dir']`) should point to the root directory where the MUSAN dataset (or at least its 'noise', 'speech', 'music' subdirectories) is located.
-
+    user needs to manually download the file and store it in the directory data/noise_musan/noise.
+    
 ## 3\. Data Loading and Preprocessing (`Dataset` Classes)
 
 Each raw audio dataset (e.g., RAVDESS, CREMA-D) is managed by its own dedicated PyTorch `Dataset` class (e.g., `RAVDESSDataset`, `CREMADataset`). These classes handle:
@@ -285,8 +286,8 @@ For realtime
 To run go to the root folder ```cd emotion_classifier\emotion_classifier```  
 ``` > python .\inference\realtime_inference_withASR.py```
 
-for single audio
-``` > python .\inference\realtime_inference_withASR.py```
+for single audio run the following. It uses preloaded files in the root directory.
+``` > python .\inference\inference.py```
 
 ## Results/Verdicts.
 
@@ -307,9 +308,10 @@ Comparison of Different Trainings (see ```runs/example_comparisons.png``` for de
 
 With frozen encoder layers and only RAVDEV audio dataset. ![image](https://github.com/user-attachments/assets/a06e94a5-a9e8-4f12-ae0d-a7df148ec078)
 Example of Tensorboard: <img width="1000" alt="example_comparisons" src="https://github.com/user-attachments/assets/9764f031-abff-4670-a537-e574633b5f28" />
-
+Confusion Matrix: 
 Example of Inference: Both ASR text and emotions are labeled. I am not happy with the performance on the realtime audio despite the validation accuracy being high. Something ain't right...
 ![image](https://github.com/user-attachments/assets/da4f1505-5996-4acc-bc7e-9d1218fd73a4)
+![confusion_animation](https://github.com/user-attachments/assets/4adf6350-f210-4f7b-bf4b-563de67e32de)
 
 ## Author
 Uttam Paudel
