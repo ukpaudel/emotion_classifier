@@ -1,6 +1,6 @@
 model:
   class_path: emotion_classifier.models.emotion_model.EmotionModel
-  checkpoint_path: runs\emotion_classifier_v16\hubert_H256_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+  checkpoint_path: runs\emotion_classifier_v18\hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
   sample_rate: 16_000
   args:
     encoder_name: hubert

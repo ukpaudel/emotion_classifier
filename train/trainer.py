@@ -7,10 +7,15 @@ from torch.utils.tensorboard import SummaryWriter
 import numpy as np
 import torchvision
 import PIL.Image
+import matplotlib.pyplot as plt
+import seaborn as sns
+import io
+from tqdm import tqdm
 from utils.logger import setup_logger
 from utils.model_utils import save_checkpoint, load_checkpoint, save_misclassified_audio
 from utils.run_tracker import update_model_runs_yaml
 from sklearn.metrics import confusion_matrix
+os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE" #this is a patch I hade to make to plot as I have dll conflicts. 
 """
 trainer.py
 
@@ -131,14 +136,36 @@ def train_model(model, train_loader, val_loader, config, run_name, resume_traini
         correct = 0
         total = 0
 
-        for i, (waveforms, labels, lengths) in enumerate(train_loader):
-          try:
-            waveforms, labels, lengths = waveforms.to(device), labels.to(device), lengths.to(device)
+        # Using tqdm for a nice progress bar
+        # Ensure that 'total' is correct if you have multiple datasets concatenated
+        # The total length of the loader is based on the number of batches
+        pbar = tqdm(enumerate(train_loader), total=len(train_loader), 
+                    desc=f"Epoch {epoch+1}/{config['training']['epochs']} Training")
 
+        for i, batch_data in pbar:
+            # --- ADD THIS CHECK HERE ---
+            if batch_data is None: 
+                # This means the collate_fn received a batch where all samples were None
+                # (i.e., all files in that batch failed to load or process).
+                tqdm.write(f"Skipping empty batch at epoch {epoch+1}, batch {i+1} as all samples failed.")
+                msg = f"[WARN] Skipping empty batch at epoch {epoch+1}, batch {i+1} as all samples failed."
+                if logger:
+                    logger.warning(msg)
+                continue # Skip to the next iteration of the loop
+            # --- END OF CHECK ---
+
+            waveforms, labels, lengths = batch_data 
+            # Move data to the correct device (GPU if available)
+            waveforms = waveforms.to(device)
+            labels = labels.to(device)
+
+            # Forward pass
             outputs = model(waveforms, lengths)
             loss = criterion(outputs, labels)
 
             optimizer.zero_grad()
+
+            #backward pass and optimize
             loss.backward()
             optimizer.step()
             scheduler.step()
@@ -147,13 +174,8 @@ def train_model(model, train_loader, val_loader, config, run_name, resume_traini
             _, predicted = torch.max(outputs, 1)
             correct += (predicted == labels).sum().item()
             total += labels.size(0)
-            
-          except Exception as e:
-            msg = f"[WARN] Failed training batch {i}: {e}"
-            print(msg)
-            if logger:
-              logger.warning(msg)
-            continue
+
+            pbar.set_postfix(loss=total_loss / (i + 1))
             
         train_acc = 100 * correct / total
         avg_loss = total_loss / len(train_loader)
@@ -183,8 +205,8 @@ def train_model(model, train_loader, val_loader, config, run_name, resume_traini
                 all_preds.extend(predicted.cpu().numpy())
                 all_labels.extend(labels.cpu().numpy())
 
-                # Optional: save misclassified examples
-                if config['logging'].get("save_misclassified"):
+                # Optional: save misclassified examples at the end of the epoch
+                if config['logging'].get("save_misclassified") and epoch==config['training']['epochs']-1:
                     save_misclassified_audio(waveforms, labels, predicted, lengths, config, epoch, logger)
 
         # calculate confusion matrix and convert it to a tensorboard image and log it

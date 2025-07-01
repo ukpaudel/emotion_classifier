@@ -5,6 +5,7 @@ import torchaudio.transforms as T
 from torch.utils.data import Dataset
 from emotion_classifier.utils.add_noise_snr import _add_noise_with_snr
 import random
+from tqdm import tqdm
 from .data_augmentations import apply_augmentations 
 
 class CREMADataset(Dataset):
@@ -32,6 +33,27 @@ class CREMADataset(Dataset):
         }
 
         self.is_train = is_train
+        self.noise_file_paths_map = noise_dir
+        if self.is_train and self.noise_dir and os.path.isdir(self.noise_dir):
+            self._preload_noise_file_paths() # New method to preload noise paths
+        
+    def _preload_noise_file_paths(self):
+        """Pre-collects all noise file paths for faster access during __getitem__."""
+        self.noise_file_paths_map = {}
+        noise_categories = ['noise', 'speech', 'music'] # Define these centrally
+        
+        for category in noise_categories:
+            category_path = os.path.join(self.noise_dir, category)
+            if os.path.isdir(category_path):
+                # IMPORTANT: Include all relevant audio extensions
+                self.noise_file_paths_map[category] = [
+                    os.path.join(category_path, f)
+                    for f in os.listdir(category_path)
+                    if f.lower().endswith(('.wav', '.flac', '.mp3')) # Adjust as per your noise files
+                ]
+            else:
+                tqdm.write(f"Warning: Noise category directory not found: {category_path}. Skipping this category.")
+                self.noise_file_paths_map[category] = [] # Ensure it's an empty list
 
     def _collect_audio_files(self):
         for root, _, files in os.walk(self.dir_link):
@@ -77,18 +99,26 @@ class CREMADataset(Dataset):
         try:
             waveform, emotion = self._extract_label_and_audio(file)
             
+            # Determine the device (e.g., 'cuda' if available, else 'cpu')
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            
+            # ---Move waveform to GPU BEFORE augmentations ---
+            if device.type == 'cuda': # Only move if a GPU is actually available
+                waveform = waveform.to(device) 
+
             # Apply augmentations only if in training mode
             if self.is_train:
                 # Call the external augmentation function
-                waveform = apply_augmentations(waveform, self.sample_rate, self.noise_dir)
-            
+                waveform = apply_augmentations(waveform, self.sample_rate,  self.noise_file_paths_map, device)
+            # Return the processed waveform (now on GPU) and label
+            # The .squeeze(0) converts [1, N] to [N] if needed
             return waveform.squeeze(0).detach(), emotion
-        
+
         except Exception as e:
-            print(f'Error with file {file}, error: {e}')
+            tqdm.write(f'Error with file {file}, error: {e}') 
             with open(self.error_log_path, "a", encoding="utf-8") as f:
                 f.write(f"{file} | Error: {str(e)}\n")
-            return None
+            return None 
 
     def get_emotion_name(self, label):
         return self.emotion_map_ravdess.get(label + 1)

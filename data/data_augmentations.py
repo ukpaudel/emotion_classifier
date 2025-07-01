@@ -75,72 +75,77 @@ def _add_noise_with_snr(clean_audio: torch.Tensor, noise_audio: torch.Tensor,
 
 
 # Main augmentation function to be called from dataset classes
-def apply_augmentations(waveform: torch.Tensor, sample_rate: int, noise_dir: str = None) -> torch.Tensor:
+def apply_augmentations(waveform: torch.Tensor, sample_rate: int, noise_file_paths_map: dict = None, device: torch.device = None) -> torch.Tensor: # New parameter
+
     """
     Applies random data augmentations to the waveform.
 
     Args:
         waveform (torch.Tensor): The input audio waveform (e.g., shape (1, seq_len)).
         sample_rate (int): The sample rate of the waveform.
-        noise_dir (str, optional): Path to a directory containing noise files (e.g., MUSAN).
+        noise_file_paths_map (dict, optional): A dictionary where keys are noise categories 
+                    (e.g., 'noise', 'speech', 'music') and values 
+                    are lists of full file paths for that category.
+                    This should be pre-collected.
+        evice (torch.device, optional): The device (e.g., 'cuda', 'cpu') to perform operations on.
+                                        If None, defaults to waveform's current device.
 
     Returns:
         torch.Tensor: The augmented waveform.
     """
+    if device is None:
+        device = waveform.device # Fallback if device isn't explicitly passed
+
     # Ensure waveform is 2D (channels, samples) for consistent transform application
     if waveform.dim() == 1:
         waveform = waveform.unsqueeze(0)
 
-    # --- 1. Apply waveform-based augmentations ---
 
-    # Add small random Gaussian noise (your original simple noise)
-    waveform = waveform + 0.005 * torch.randn_like(waveform)
+# --- 1. Apply waveform-based augmentations ---
 
     # --- Gain (Volume) ---
-    if random.random() < 0.5: # 50% chance to apply gain
+    if random.random() < 0.2: # 50% chance to apply gain
         gain_db = random.uniform(-6, 6) # Random gain between -6dB and +6dB
-        vol_transform = T.Vol(gain=gain_db, gain_type="db")
+        vol_transform = T.Vol(gain=gain_db, gain_type="db").to(device)
         waveform = vol_transform(waveform)
 
-    # --- Pitch Shift ---
-    if random.random() < 0.5: # 50% chance to apply pitch shift
-        try:
-            n_steps = random.uniform(-4, 4) # Shift pitch by -4 to +4 semitones
-            pitch_shifter = T.PitchShift(sample_rate, n_steps)
-            waveform = pitch_shifter(waveform)
-        except Exception as e:
-            # Handle cases where PitchShift might not be fully supported or cause issues
-            print(f"Warning: Could not apply PitchShift: {e}. Skipping.")
-            pass # Continue without this augmentation
+    # # --- Pitch Shift ---
+    # if random.random() < 0.3: # 50% chance to apply pitch shift
+    #     try:
+    #         n_steps = random.uniform(-4, 4) # Shift pitch by -4 to +4 semitones
+    #         pitch_shifter = T.PitchShift(sample_rate, n_steps).to(device)
+    #         waveform = pitch_shifter(waveform)
+    #     except Exception as e:
+    #         # Handle cases where PitchShift might not be fully supported or cause issues
+    #         print(f"Warning: Could not apply PitchShift: {e}. Skipping.")
+    #         pass # Continue without this augmentation
 
     # --- Noise from MUSAN (Crackle/Microphone Noise) ---
-    if noise_dir and os.path.isdir(noise_dir) and random.random() < 0.3: # 30% chance to add MUSAN noise
+    if noise_file_paths_map and any(noise_file_paths_map.values()) and random.random() < 0.3:
         try:
-            # Assuming MUSAN structure: noise_dir/noise, noise_dir/speech, noise_dir/music
             noise_categories = ['noise', 'speech', 'music']
-            #TODO Hard coded to music for now.
             #selected_category = random.choice(noise_categories)
+            #TODO hardcoded noise folder only for now. 
             selected_category = 'noise'
-            noise_category_path = os.path.join(noise_dir, selected_category)
+            # Retrieve pre-collected file paths
+            current_category_noise_files = noise_file_paths_map.get(selected_category)
 
-            if os.path.isdir(noise_category_path):
-                noise_files = [os.path.join(noise_category_path, f) 
-                               for f in os.listdir(noise_category_path) 
-                               if f.endswith('.wav')]
-                if noise_files:
-                    random_noise_file = random.choice(noise_files)
-                    noise_waveform, noise_sr = torchaudio.load(random_noise_file)
-                    
-                    # Resample noise if its sample rate doesn't match
-                    if noise_sr != sample_rate:
-                        resampler = T.Resample(noise_sr, sample_rate)
-                        noise_waveform = resampler(noise_waveform)
-                    
-                    # Choose a random SNR for mixing (e.g., between 5 dB and 20 dB)
-                    snr_db = random.uniform(5.0, 20.0) 
-                    waveform = _add_noise_with_snr(waveform, noise_waveform, snr_db, sample_rate)
-                else:
-                    print(f"Warning: No .wav files found in noise category '{selected_category}' at {noise_category_path}. Skipping noise augmentation.")
+            if current_category_noise_files: # Check if there are files in this category
+                random_noise_file = random.choice(current_category_noise_files) # Pick from pre-collected list
+                # Noise waveform is loaded on CPU first
+                noise_waveform, noise_sr = torchaudio.load(random_noise_file)
+                # Resample noise if its sample rate doesn't match
+                if noise_sr != sample_rate:  
+                    resampler = T.Resample(noise_sr, sample_rate)
+                    noise_waveform = resampler(noise_waveform)
+
+                # ---  Move loaded noise to GPU for mixing ---
+
+                noise_waveform_gpu = noise_waveform.to(device)
+                # Choose a random SNR for mixing (e.g., between 5 dB and 20 dB)
+                snr_db = random.uniform(5.0, 20.0) 
+                # _add_noise_with_snr will now operate on GPU tensors
+                waveform = _add_noise_with_snr(waveform, noise_waveform_gpu, snr_db, sample_rate)
             else:
                 print(f"Warning: Noise category path '{noise_category_path}' does not exist. Skipping noise augmentation.")
         except Exception as e:
@@ -148,39 +153,39 @@ def apply_augmentations(waveform: torch.Tensor, sample_rate: int, noise_dir: str
             pass # Continue without this noise augmentation if there's an error
 
 
-    # --- 2. Apply Spectrogram-based augmentations (e.g., Time Stretch) ---
+    # --- 2. Apply Spectrogram-based augmentations (e.g., Time Stretch) in GPU ---
     # TimeStretch requires a complex-valued spectrogram input.
     # We'll convert to spectrogram, apply stretch, then convert back to waveform.
-    if random.random() < 0.5: # 50% chance to apply time stretch
-        stretch_rate = random.uniform(0.8, 1.2) 
+    # if random.random() < 0.2: # 20% chance to apply time stretch
+    #     stretch_rate = random.uniform(0.8, 1.2) 
 
-        n_fft = 2048 
-        hop_length = n_fft // 4 
-        n_freq = n_fft // 2 + 1 # This calculates 1025 for n_fft=2048
+    #     n_fft = 2048 
+    #     hop_length = n_fft // 4 
+    #     n_freq = n_fft // 2 + 1 # This calculates 1025 for n_fft=2048
         
-        # Initialize Spectrogram WITHOUT return_complex=True (deprecated warning)
-        spectrogram_transform = T.Spectrogram(
-            n_fft=n_fft,
-            hop_length=hop_length,
-            power=None, 
-        )
+    #     # Initialize Spectrogram WITHOUT return_complex=True (deprecated warning)
+    #     spectrogram_transform = T.Spectrogram(
+    #         n_fft=n_fft,
+    #         hop_length=hop_length,
+    #         power=None, 
+    #     ).to(device) 
         
-        # Initialize TimeStretch with explicit n_freq and hop_length for robustness
-        # This is the main fix for the "size of tensor a (1025) must match b (201)" error
-        time_stretcher = T.TimeStretch(n_freq=n_freq, hop_length=hop_length)
+    #     # Initialize TimeStretch with explicit n_freq and hop_length for robustness
+    #     # This is the main fix for the "size of tensor a (1025) must match b (201)" error
+    #     time_stretcher = T.TimeStretch(n_freq=n_freq, hop_length=hop_length).to(device) 
         
-        inverse_spectrogram_transform = T.InverseSpectrogram(
-            n_fft=n_fft,
-            hop_length=hop_length
-        )
+    #     inverse_spectrogram_transform = T.InverseSpectrogram(
+    #         n_fft=n_fft,
+    #         hop_length=hop_length
+    #     ).to(device) 
 
-        try:
-            complex_spectrogram = spectrogram_transform(waveform)
-            stretched_complex_spectrogram = time_stretcher(complex_spectrogram, stretch_rate)
-            waveform = inverse_spectrogram_transform(stretched_complex_spectrogram)
+    #     try:
+    #         complex_spectrogram = spectrogram_transform(waveform) # Input (waveform) is already on GPU
+    #         stretched_complex_spectrogram = time_stretcher(complex_spectrogram, stretch_rate)
+    #         waveform = inverse_spectrogram_transform(stretched_complex_spectrogram)
             
-        except Exception as e:
-            print(f"Warning: Error applying TimeStretch: {e}. Skipping.")
-            pass 
+    #     except Exception as e:
+    #         print(f"Warning: Error applying TimeStretch: {e}. Skipping.")
+    #         pass 
 
-    return waveform
+    return waveform # The augmented is now on the GPU

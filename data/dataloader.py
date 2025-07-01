@@ -45,6 +45,7 @@ def create_dataloaders(config):
 
     # Get the global noise directory from config
     global_noise_dir = config['data'].get('noise_dir', None) 
+    print('NOISE DATA from ', global_noise_dir)
 
     all_train_subsets = []
     all_val_subsets = []
@@ -109,4 +110,6 @@ def create_dataloaders(config):
         collate_fn=collate_fn,
         num_workers=num_workers
     )
+
+    print('TEST TEST TEST TEST', len(train_loader), len(val_loader))
     return train_loader, val_loader

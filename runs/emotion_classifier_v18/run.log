@@ -1,0 +1,533 @@
+2025-07-01 10:04:47,500 - INFO - Logger initialized for run: hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3 at 2025-07-01T10:04:47.500777
+2025-07-01 10:04:47,500 - INFO - ===== Running Experiment =====
+2025-07-01 10:04:47,522 - INFO - ===== Successfully loaded hubert model =====
+2025-07-01 10:04:48,580 - INFO - [Info] Encoder Bundle Extracted!!! Model Information {'model': Wav2Vec2Model(
+  (feature_extractor): FeatureExtractor(
+    (conv_layers): ModuleList(
+      (0): ConvLayerBlock(
+        (layer_norm): GroupNorm(512, 512, eps=1e-05, affine=True)
+        (conv): Conv1d(1, 512, kernel_size=(10,), stride=(5,), bias=False)
+      )
+      (1-4): 4 x ConvLayerBlock(
+        (conv): Conv1d(512, 512, kernel_size=(3,), stride=(2,), bias=False)
+      )
+      (5-6): 2 x ConvLayerBlock(
+        (conv): Conv1d(512, 512, kernel_size=(2,), stride=(2,), bias=False)
+      )
+    )
+  )
+  (encoder): Encoder(
+    (feature_projection): FeatureProjection(
+      (layer_norm): LayerNorm((512,), eps=1e-05, elementwise_affine=True)
+      (projection): Linear(in_features=512, out_features=768, bias=True)
+      (dropout): Dropout(p=0.1, inplace=False)
+    )
+    (transformer): Transformer(
+      (pos_conv_embed): ConvolutionalPositionalEmbedding(
+        (conv): ParametrizedConv1d(
+          768, 768, kernel_size=(128,), stride=(1,), padding=(64,), groups=16
+          (parametrizations): ModuleDict(
+            (weight): ParametrizationList(
+              (0): _WeightNorm()
+            )
+          )
+        )
+      )
+      (layer_norm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+      (dropout): Dropout(p=0.1, inplace=False)
+      (layers): ModuleList(
+        (0-11): 12 x EncoderLayer(
+          (attention): SelfAttention(
+            (k_proj): Linear(in_features=768, out_features=768, bias=True)
+            (v_proj): Linear(in_features=768, out_features=768, bias=True)
+            (q_proj): Linear(in_features=768, out_features=768, bias=True)
+            (out_proj): Linear(in_features=768, out_features=768, bias=True)
+          )
+          (dropout): Dropout(p=0.1, inplace=False)
+          (layer_norm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+          (feed_forward): FeedForward(
+            (intermediate_dense): Linear(in_features=768, out_features=3072, bias=True)
+            (intermediate_dropout): Dropout(p=0.0, inplace=False)
+            (output_dense): Linear(in_features=3072, out_features=768, bias=True)
+            (output_dropout): Dropout(p=0.1, inplace=False)
+          )
+          (final_layer_norm): LayerNorm((768,), eps=1e-05, elementwise_affine=True)
+        )
+      )
+    )
+  )
+), 'sample_rate': 16000, 'feature_dim': 768, 'name': 'hubert'}.
+2025-07-01 10:04:48,580 - INFO - pos_conv_embed.conv.bias: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - pos_conv_embed.conv.parametrizations.weight.original0: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - pos_conv_embed.conv.parametrizations.weight.original1: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layer_norm.weight: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layer_norm.bias: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.0.attention.k_proj.weight: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.0.attention.k_proj.bias: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.0.attention.v_proj.weight: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.0.attention.v_proj.bias: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.0.attention.q_proj.weight: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.0.attention.q_proj.bias: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.0.attention.out_proj.weight: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.0.attention.out_proj.bias: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.0.layer_norm.weight: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.0.layer_norm.bias: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.0.feed_forward.intermediate_dense.weight: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.0.feed_forward.intermediate_dense.bias: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.0.feed_forward.output_dense.weight: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.0.feed_forward.output_dense.bias: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.0.final_layer_norm.weight: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.0.final_layer_norm.bias: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.1.attention.k_proj.weight: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.1.attention.k_proj.bias: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.1.attention.v_proj.weight: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.1.attention.v_proj.bias: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.1.attention.q_proj.weight: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.1.attention.q_proj.bias: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.1.attention.out_proj.weight: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.1.attention.out_proj.bias: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.1.layer_norm.weight: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.1.layer_norm.bias: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.1.feed_forward.intermediate_dense.weight: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.1.feed_forward.intermediate_dense.bias: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.1.feed_forward.output_dense.weight: requires_grad=False
+2025-07-01 10:04:48,580 - INFO - layers.1.feed_forward.output_dense.bias: requires_grad=False
+2025-07-01 10:04:48,595 - INFO - layers.1.final_layer_norm.weight: requires_grad=False
+2025-07-01 10:04:48,595 - INFO - layers.1.final_layer_norm.bias: requires_grad=False
+2025-07-01 10:04:48,595 - INFO - layers.2.attention.k_proj.weight: requires_grad=False
+2025-07-01 10:04:48,595 - INFO - layers.2.attention.k_proj.bias: requires_grad=False
+2025-07-01 10:04:48,595 - INFO - layers.2.attention.v_proj.weight: requires_grad=False
+2025-07-01 10:04:48,595 - INFO - layers.2.attention.v_proj.bias: requires_grad=False
+2025-07-01 10:04:48,595 - INFO - layers.2.attention.q_proj.weight: requires_grad=False
+2025-07-01 10:04:48,595 - INFO - layers.2.attention.q_proj.bias: requires_grad=False
+2025-07-01 10:04:48,596 - INFO - layers.2.attention.out_proj.weight: requires_grad=False
+2025-07-01 10:04:48,596 - INFO - layers.2.attention.out_proj.bias: requires_grad=False
+2025-07-01 10:04:48,596 - INFO - layers.2.layer_norm.weight: requires_grad=False
+2025-07-01 10:04:48,596 - INFO - layers.2.layer_norm.bias: requires_grad=False
+2025-07-01 10:04:48,596 - INFO - layers.2.feed_forward.intermediate_dense.weight: requires_grad=False
+2025-07-01 10:04:48,597 - INFO - layers.2.feed_forward.intermediate_dense.bias: requires_grad=False
+2025-07-01 10:04:48,597 - INFO - layers.2.feed_forward.output_dense.weight: requires_grad=False
+2025-07-01 10:04:48,597 - INFO - layers.2.feed_forward.output_dense.bias: requires_grad=False
+2025-07-01 10:04:48,597 - INFO - layers.2.final_layer_norm.weight: requires_grad=False
+2025-07-01 10:04:48,597 - INFO - layers.2.final_layer_norm.bias: requires_grad=False
+2025-07-01 10:04:48,597 - INFO - layers.3.attention.k_proj.weight: requires_grad=False
+2025-07-01 10:04:48,597 - INFO - layers.3.attention.k_proj.bias: requires_grad=False
+2025-07-01 10:04:48,597 - INFO - layers.3.attention.v_proj.weight: requires_grad=False
+2025-07-01 10:04:48,597 - INFO - layers.3.attention.v_proj.bias: requires_grad=False
+2025-07-01 10:04:48,598 - INFO - layers.3.attention.q_proj.weight: requires_grad=False
+2025-07-01 10:04:48,598 - INFO - layers.3.attention.q_proj.bias: requires_grad=False
+2025-07-01 10:04:48,598 - INFO - layers.3.attention.out_proj.weight: requires_grad=False
+2025-07-01 10:04:48,598 - INFO - layers.3.attention.out_proj.bias: requires_grad=False
+2025-07-01 10:04:48,598 - INFO - layers.3.layer_norm.weight: requires_grad=False
+2025-07-01 10:04:48,598 - INFO - layers.3.layer_norm.bias: requires_grad=False
+2025-07-01 10:04:48,598 - INFO - layers.3.feed_forward.intermediate_dense.weight: requires_grad=False
+2025-07-01 10:04:48,598 - INFO - layers.3.feed_forward.intermediate_dense.bias: requires_grad=False
+2025-07-01 10:04:48,598 - INFO - layers.3.feed_forward.output_dense.weight: requires_grad=False
+2025-07-01 10:04:48,598 - INFO - layers.3.feed_forward.output_dense.bias: requires_grad=False
+2025-07-01 10:04:48,598 - INFO - layers.3.final_layer_norm.weight: requires_grad=False
+2025-07-01 10:04:48,599 - INFO - layers.3.final_layer_norm.bias: requires_grad=False
+2025-07-01 10:04:48,599 - INFO - layers.4.attention.k_proj.weight: requires_grad=False
+2025-07-01 10:04:48,599 - INFO - layers.4.attention.k_proj.bias: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.4.attention.v_proj.weight: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.4.attention.v_proj.bias: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.4.attention.q_proj.weight: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.4.attention.q_proj.bias: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.4.attention.out_proj.weight: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.4.attention.out_proj.bias: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.4.layer_norm.weight: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.4.layer_norm.bias: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.4.feed_forward.intermediate_dense.weight: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.4.feed_forward.intermediate_dense.bias: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.4.feed_forward.output_dense.weight: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.4.feed_forward.output_dense.bias: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.4.final_layer_norm.weight: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.4.final_layer_norm.bias: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.5.attention.k_proj.weight: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.5.attention.k_proj.bias: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.5.attention.v_proj.weight: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.5.attention.v_proj.bias: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.5.attention.q_proj.weight: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.5.attention.q_proj.bias: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.5.attention.out_proj.weight: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.5.attention.out_proj.bias: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.5.layer_norm.weight: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.5.layer_norm.bias: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.5.feed_forward.intermediate_dense.weight: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.5.feed_forward.intermediate_dense.bias: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.5.feed_forward.output_dense.weight: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.5.feed_forward.output_dense.bias: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.5.final_layer_norm.weight: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.5.final_layer_norm.bias: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.6.attention.k_proj.weight: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.6.attention.k_proj.bias: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.6.attention.v_proj.weight: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.6.attention.v_proj.bias: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.6.attention.q_proj.weight: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.6.attention.q_proj.bias: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.6.attention.out_proj.weight: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.6.attention.out_proj.bias: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.6.layer_norm.weight: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.6.layer_norm.bias: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.6.feed_forward.intermediate_dense.weight: requires_grad=False
+2025-07-01 10:04:48,600 - INFO - layers.6.feed_forward.intermediate_dense.bias: requires_grad=False
+2025-07-01 10:04:48,605 - INFO - layers.6.feed_forward.output_dense.weight: requires_grad=False
+2025-07-01 10:04:48,605 - INFO - layers.6.feed_forward.output_dense.bias: requires_grad=False
+2025-07-01 10:04:48,605 - INFO - layers.6.final_layer_norm.weight: requires_grad=False
+2025-07-01 10:04:48,605 - INFO - layers.6.final_layer_norm.bias: requires_grad=False
+2025-07-01 10:04:48,605 - INFO - layers.7.attention.k_proj.weight: requires_grad=False
+2025-07-01 10:04:48,605 - INFO - layers.7.attention.k_proj.bias: requires_grad=False
+2025-07-01 10:04:48,605 - INFO - layers.7.attention.v_proj.weight: requires_grad=False
+2025-07-01 10:04:48,605 - INFO - layers.7.attention.v_proj.bias: requires_grad=False
+2025-07-01 10:04:48,605 - INFO - layers.7.attention.q_proj.weight: requires_grad=False
+2025-07-01 10:04:48,605 - INFO - layers.7.attention.q_proj.bias: requires_grad=False
+2025-07-01 10:04:48,606 - INFO - layers.7.attention.out_proj.weight: requires_grad=False
+2025-07-01 10:04:48,606 - INFO - layers.7.attention.out_proj.bias: requires_grad=False
+2025-07-01 10:04:48,606 - INFO - layers.7.layer_norm.weight: requires_grad=False
+2025-07-01 10:04:48,606 - INFO - layers.7.layer_norm.bias: requires_grad=False
+2025-07-01 10:04:48,606 - INFO - layers.7.feed_forward.intermediate_dense.weight: requires_grad=False
+2025-07-01 10:04:48,606 - INFO - layers.7.feed_forward.intermediate_dense.bias: requires_grad=False
+2025-07-01 10:04:48,606 - INFO - layers.7.feed_forward.output_dense.weight: requires_grad=False
+2025-07-01 10:04:48,606 - INFO - layers.7.feed_forward.output_dense.bias: requires_grad=False
+2025-07-01 10:04:48,606 - INFO - layers.7.final_layer_norm.weight: requires_grad=False
+2025-07-01 10:04:48,606 - INFO - layers.7.final_layer_norm.bias: requires_grad=False
+2025-07-01 10:04:48,607 - INFO - layers.8.attention.k_proj.weight: requires_grad=False
+2025-07-01 10:04:48,607 - INFO - layers.8.attention.k_proj.bias: requires_grad=False
+2025-07-01 10:04:48,607 - INFO - layers.8.attention.v_proj.weight: requires_grad=False
+2025-07-01 10:04:48,607 - INFO - layers.8.attention.v_proj.bias: requires_grad=False
+2025-07-01 10:04:48,607 - INFO - layers.8.attention.q_proj.weight: requires_grad=False
+2025-07-01 10:04:48,607 - INFO - layers.8.attention.q_proj.bias: requires_grad=False
+2025-07-01 10:04:48,607 - INFO - layers.8.attention.out_proj.weight: requires_grad=False
+2025-07-01 10:04:48,607 - INFO - layers.8.attention.out_proj.bias: requires_grad=False
+2025-07-01 10:04:48,607 - INFO - layers.8.layer_norm.weight: requires_grad=False
+2025-07-01 10:04:48,607 - INFO - layers.8.layer_norm.bias: requires_grad=False
+2025-07-01 10:04:48,608 - INFO - layers.8.feed_forward.intermediate_dense.weight: requires_grad=False
+2025-07-01 10:04:48,608 - INFO - layers.8.feed_forward.intermediate_dense.bias: requires_grad=False
+2025-07-01 10:04:48,608 - INFO - layers.8.feed_forward.output_dense.weight: requires_grad=False
+2025-07-01 10:04:48,608 - INFO - layers.8.feed_forward.output_dense.bias: requires_grad=False
+2025-07-01 10:04:48,608 - INFO - layers.8.final_layer_norm.weight: requires_grad=False
+2025-07-01 10:04:48,608 - INFO - layers.8.final_layer_norm.bias: requires_grad=False
+2025-07-01 10:04:48,608 - INFO - layers.9.attention.k_proj.weight: requires_grad=True
+2025-07-01 10:04:48,608 - INFO - layers.9.attention.k_proj.bias: requires_grad=True
+2025-07-01 10:04:48,608 - INFO - layers.9.attention.v_proj.weight: requires_grad=True
+2025-07-01 10:04:48,608 - INFO - layers.9.attention.v_proj.bias: requires_grad=True
+2025-07-01 10:04:48,609 - INFO - layers.9.attention.q_proj.weight: requires_grad=True
+2025-07-01 10:04:48,609 - INFO - layers.9.attention.q_proj.bias: requires_grad=True
+2025-07-01 10:04:48,609 - INFO - layers.9.attention.out_proj.weight: requires_grad=True
+2025-07-01 10:04:48,609 - INFO - layers.9.attention.out_proj.bias: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.9.layer_norm.weight: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.9.layer_norm.bias: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.9.feed_forward.intermediate_dense.weight: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.9.feed_forward.intermediate_dense.bias: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.9.feed_forward.output_dense.weight: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.9.feed_forward.output_dense.bias: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.9.final_layer_norm.weight: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.9.final_layer_norm.bias: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.10.attention.k_proj.weight: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.10.attention.k_proj.bias: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.10.attention.v_proj.weight: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.10.attention.v_proj.bias: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.10.attention.q_proj.weight: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.10.attention.q_proj.bias: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.10.attention.out_proj.weight: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.10.attention.out_proj.bias: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.10.layer_norm.weight: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.10.layer_norm.bias: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.10.feed_forward.intermediate_dense.weight: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.10.feed_forward.intermediate_dense.bias: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.10.feed_forward.output_dense.weight: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.10.feed_forward.output_dense.bias: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.10.final_layer_norm.weight: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.10.final_layer_norm.bias: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.11.attention.k_proj.weight: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.11.attention.k_proj.bias: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.11.attention.v_proj.weight: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.11.attention.v_proj.bias: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.11.attention.q_proj.weight: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.11.attention.q_proj.bias: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.11.attention.out_proj.weight: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.11.attention.out_proj.bias: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.11.layer_norm.weight: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.11.layer_norm.bias: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.11.feed_forward.intermediate_dense.weight: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.11.feed_forward.intermediate_dense.bias: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.11.feed_forward.output_dense.weight: requires_grad=True
+2025-07-01 10:04:48,610 - INFO - layers.11.feed_forward.output_dense.bias: requires_grad=True
+2025-07-01 10:04:48,615 - INFO - layers.11.final_layer_norm.weight: requires_grad=True
+2025-07-01 10:04:48,615 - INFO - layers.11.final_layer_norm.bias: requires_grad=True
+2025-07-01 10:04:48,618 - INFO - Initialized EmotionModel with encoder='hubert' | Feature dim: 768 | Classes: 8
+2025-07-01 10:04:49,082 - INFO - Logger initialized for run: hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3 at 2025-07-01T10:04:49.082247
+2025-07-01 10:04:49,087 - INFO - [INFO] Data used for trainings are  data.ravdess_dataset.RAVDESSDataset from data/ravdess/data
+2025-07-01 10:04:49,087 - INFO - [INFO] Data used for trainings are  data.cremad_dataset.CREMADataset from data/CREMA-D/data
+2025-07-01 10:04:49,087 - INFO - [INFO] Removing old log directory: runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3
+2025-07-01 10:04:49,089 - INFO - [INFO] Starting fresh training
+2025-07-01 10:05:50,916 - INFO - Epoch 1/100 | Train Loss: 1.7738 | Train Acc: 28.24%
+2025-07-01 10:06:06,525 - INFO - Validation Acc: 32.78%
+2025-07-01 10:06:07,765 - INFO - Checkpoint saved at epoch 0 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:06:07,765 - INFO - New best model saved.
+2025-07-01 10:07:10,233 - INFO - Epoch 2/100 | Train Loss: 1.6182 | Train Acc: 35.29%
+2025-07-01 10:07:23,567 - INFO - Validation Acc: 39.31%
+2025-07-01 10:07:24,043 - INFO - Checkpoint saved at epoch 1 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:07:24,043 - INFO - New best model saved.
+2025-07-01 10:08:23,716 - INFO - Epoch 3/100 | Train Loss: 1.5496 | Train Acc: 37.81%
+2025-07-01 10:08:36,830 - INFO - Validation Acc: 39.63%
+2025-07-01 10:08:37,222 - INFO - Checkpoint saved at epoch 2 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:08:37,222 - INFO - New best model saved.
+2025-07-01 10:09:36,581 - INFO - Epoch 4/100 | Train Loss: 1.5024 | Train Acc: 40.55%
+2025-07-01 10:09:49,689 - INFO - Validation Acc: 43.84%
+2025-07-01 10:09:50,139 - INFO - Checkpoint saved at epoch 3 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:09:50,139 - INFO - New best model saved.
+2025-07-01 10:10:49,715 - INFO - Epoch 5/100 | Train Loss: 1.4537 | Train Acc: 43.16%
+2025-07-01 10:11:02,818 - INFO - Validation Acc: 45.68%
+2025-07-01 10:11:03,272 - INFO - Checkpoint saved at epoch 4 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:11:03,272 - INFO - New best model saved.
+2025-07-01 10:12:03,119 - INFO - Epoch 6/100 | Train Loss: 1.4301 | Train Acc: 43.78%
+2025-07-01 10:12:16,340 - INFO - Validation Acc: 47.62%
+2025-07-01 10:12:16,720 - INFO - Checkpoint saved at epoch 5 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:12:16,720 - INFO - New best model saved.
+2025-07-01 10:13:16,238 - INFO - Epoch 7/100 | Train Loss: 1.3930 | Train Acc: 46.24%
+2025-07-01 10:13:29,380 - INFO - Validation Acc: 50.81%
+2025-07-01 10:13:29,766 - INFO - Checkpoint saved at epoch 6 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:13:29,766 - INFO - New best model saved.
+2025-07-01 10:14:29,322 - INFO - Epoch 8/100 | Train Loss: 1.3361 | Train Acc: 49.45%
+2025-07-01 10:14:42,383 - INFO - Validation Acc: 52.59%
+2025-07-01 10:14:42,739 - INFO - Checkpoint saved at epoch 7 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:14:42,739 - INFO - New best model saved.
+2025-07-01 10:15:42,549 - INFO - Epoch 9/100 | Train Loss: 1.2945 | Train Acc: 51.39%
+2025-07-01 10:15:55,603 - INFO - Validation Acc: 53.83%
+2025-07-01 10:15:55,973 - INFO - Checkpoint saved at epoch 8 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:15:55,973 - INFO - New best model saved.
+2025-07-01 10:16:55,900 - INFO - Epoch 10/100 | Train Loss: 1.2781 | Train Acc: 51.72%
+2025-07-01 10:17:09,010 - INFO - Validation Acc: 53.24%
+2025-07-01 10:18:08,921 - INFO - Epoch 11/100 | Train Loss: 1.2587 | Train Acc: 51.98%
+2025-07-01 10:18:21,996 - INFO - Validation Acc: 54.54%
+2025-07-01 10:18:22,369 - INFO - Checkpoint saved at epoch 10 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:18:22,369 - INFO - New best model saved.
+2025-07-01 10:19:21,916 - INFO - Epoch 12/100 | Train Loss: 1.2552 | Train Acc: 52.53%
+2025-07-01 10:19:34,981 - INFO - Validation Acc: 56.43%
+2025-07-01 10:19:35,352 - INFO - Checkpoint saved at epoch 11 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:19:35,352 - INFO - New best model saved.
+2025-07-01 10:20:34,803 - INFO - Epoch 13/100 | Train Loss: 1.2421 | Train Acc: 53.12%
+2025-07-01 10:20:47,819 - INFO - Validation Acc: 55.35%
+2025-07-01 10:21:47,521 - INFO - Epoch 14/100 | Train Loss: 1.2090 | Train Acc: 54.68%
+2025-07-01 10:22:00,652 - INFO - Validation Acc: 55.67%
+2025-07-01 10:23:00,399 - INFO - Epoch 15/100 | Train Loss: 1.1938 | Train Acc: 55.56%
+2025-07-01 10:23:13,663 - INFO - Validation Acc: 57.88%
+2025-07-01 10:23:14,028 - INFO - Checkpoint saved at epoch 14 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:23:14,028 - INFO - New best model saved.
+2025-07-01 10:24:13,849 - INFO - Epoch 16/100 | Train Loss: 1.1559 | Train Acc: 56.94%
+2025-07-01 10:24:26,983 - INFO - Validation Acc: 57.94%
+2025-07-01 10:24:27,342 - INFO - Checkpoint saved at epoch 15 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:24:27,342 - INFO - New best model saved.
+2025-07-01 10:25:27,171 - INFO - Epoch 17/100 | Train Loss: 1.1546 | Train Acc: 56.05%
+2025-07-01 10:25:40,211 - INFO - Validation Acc: 58.91%
+2025-07-01 10:25:40,590 - INFO - Checkpoint saved at epoch 16 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:25:40,590 - INFO - New best model saved.
+2025-07-01 10:26:40,282 - INFO - Epoch 18/100 | Train Loss: 1.1334 | Train Acc: 57.95%
+2025-07-01 10:26:53,433 - INFO - Validation Acc: 60.42%
+2025-07-01 10:26:53,821 - INFO - Checkpoint saved at epoch 17 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:26:53,821 - INFO - New best model saved.
+2025-07-01 10:27:53,538 - INFO - Epoch 19/100 | Train Loss: 1.1166 | Train Acc: 58.18%
+2025-07-01 10:28:06,630 - INFO - Validation Acc: 60.85%
+2025-07-01 10:28:06,983 - INFO - Checkpoint saved at epoch 18 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:28:06,983 - INFO - New best model saved.
+2025-07-01 10:29:06,847 - INFO - Epoch 20/100 | Train Loss: 1.1135 | Train Acc: 58.36%
+2025-07-01 10:29:19,861 - INFO - Validation Acc: 60.75%
+2025-07-01 10:30:19,350 - INFO - Epoch 21/100 | Train Loss: 1.0914 | Train Acc: 59.42%
+2025-07-01 10:30:32,440 - INFO - Validation Acc: 61.07%
+2025-07-01 10:30:32,832 - INFO - Checkpoint saved at epoch 20 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:30:32,832 - INFO - New best model saved.
+2025-07-01 10:31:32,753 - INFO - Epoch 22/100 | Train Loss: 1.1063 | Train Acc: 58.93%
+2025-07-01 10:31:45,873 - INFO - Validation Acc: 61.18%
+2025-07-01 10:31:46,335 - INFO - Checkpoint saved at epoch 21 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:31:46,335 - INFO - New best model saved.
+2025-07-01 10:32:46,219 - INFO - Epoch 23/100 | Train Loss: 1.0872 | Train Acc: 59.33%
+2025-07-01 10:32:59,323 - INFO - Validation Acc: 60.96%
+2025-07-01 10:33:58,717 - INFO - Epoch 24/100 | Train Loss: 1.0906 | Train Acc: 59.42%
+2025-07-01 10:34:11,905 - INFO - Validation Acc: 61.66%
+2025-07-01 10:34:12,274 - INFO - Checkpoint saved at epoch 23 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:34:12,274 - INFO - New best model saved.
+2025-07-01 10:35:12,072 - INFO - Epoch 25/100 | Train Loss: 1.0875 | Train Acc: 59.86%
+2025-07-01 10:35:25,172 - INFO - Validation Acc: 61.45%
+2025-07-01 10:36:24,538 - INFO - Epoch 26/100 | Train Loss: 1.0750 | Train Acc: 59.72%
+2025-07-01 10:36:37,638 - INFO - Validation Acc: 62.37%
+2025-07-01 10:36:38,010 - INFO - Checkpoint saved at epoch 25 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:36:38,010 - INFO - New best model saved.
+2025-07-01 10:37:37,687 - INFO - Epoch 27/100 | Train Loss: 1.0668 | Train Acc: 60.00%
+2025-07-01 10:37:50,776 - INFO - Validation Acc: 62.42%
+2025-07-01 10:37:51,207 - INFO - Checkpoint saved at epoch 26 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:37:51,207 - INFO - New best model saved.
+2025-07-01 10:38:50,261 - INFO - Epoch 28/100 | Train Loss: 1.0453 | Train Acc: 60.54%
+2025-07-01 10:39:03,255 - INFO - Validation Acc: 63.61%
+2025-07-01 10:39:03,613 - INFO - Checkpoint saved at epoch 27 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:39:03,613 - INFO - New best model saved.
+2025-07-01 10:40:02,849 - INFO - Epoch 29/100 | Train Loss: 1.0313 | Train Acc: 60.55%
+2025-07-01 10:40:15,922 - INFO - Validation Acc: 62.90%
+2025-07-01 10:41:15,188 - INFO - Epoch 30/100 | Train Loss: 1.0186 | Train Acc: 61.52%
+2025-07-01 10:41:28,317 - INFO - Validation Acc: 63.17%
+2025-07-01 10:42:27,495 - INFO - Epoch 31/100 | Train Loss: 1.0120 | Train Acc: 61.75%
+2025-07-01 10:42:40,554 - INFO - Validation Acc: 63.82%
+2025-07-01 10:42:40,922 - INFO - Checkpoint saved at epoch 30 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:42:40,922 - INFO - New best model saved.
+2025-07-01 10:43:39,894 - INFO - Epoch 32/100 | Train Loss: 1.0051 | Train Acc: 62.13%
+2025-07-01 10:43:52,990 - INFO - Validation Acc: 64.31%
+2025-07-01 10:43:53,426 - INFO - Checkpoint saved at epoch 31 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:43:53,426 - INFO - New best model saved.
+2025-07-01 10:44:52,566 - INFO - Epoch 33/100 | Train Loss: 1.0080 | Train Acc: 62.48%
+2025-07-01 10:45:05,649 - INFO - Validation Acc: 63.17%
+2025-07-01 10:46:04,986 - INFO - Epoch 34/100 | Train Loss: 0.9914 | Train Acc: 62.70%
+2025-07-01 10:46:18,195 - INFO - Validation Acc: 63.98%
+2025-07-01 10:47:17,523 - INFO - Epoch 35/100 | Train Loss: 0.9896 | Train Acc: 62.82%
+2025-07-01 10:47:30,658 - INFO - Validation Acc: 64.25%
+2025-07-01 10:48:29,998 - INFO - Epoch 36/100 | Train Loss: 0.9760 | Train Acc: 63.53%
+2025-07-01 10:48:43,036 - INFO - Validation Acc: 63.88%
+2025-07-01 10:49:42,469 - INFO - Epoch 37/100 | Train Loss: 0.9844 | Train Acc: 62.63%
+2025-07-01 10:49:55,495 - INFO - Validation Acc: 64.31%
+2025-07-01 10:50:54,568 - INFO - Epoch 38/100 | Train Loss: 0.9742 | Train Acc: 63.24%
+2025-07-01 10:51:07,626 - INFO - Validation Acc: 64.96%
+2025-07-01 10:51:07,995 - INFO - Checkpoint saved at epoch 37 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 10:51:07,995 - INFO - New best model saved.
+2025-07-01 10:52:07,109 - INFO - Epoch 39/100 | Train Loss: 0.9825 | Train Acc: 63.03%
+2025-07-01 10:52:20,212 - INFO - Validation Acc: 64.25%
+2025-07-01 10:53:19,451 - INFO - Epoch 40/100 | Train Loss: 0.9716 | Train Acc: 63.37%
+2025-07-01 10:53:32,469 - INFO - Validation Acc: 64.85%
+2025-07-01 10:54:31,581 - INFO - Epoch 41/100 | Train Loss: 0.9688 | Train Acc: 63.74%
+2025-07-01 10:54:44,620 - INFO - Validation Acc: 64.74%
+2025-07-01 10:55:44,163 - INFO - Epoch 42/100 | Train Loss: 0.9715 | Train Acc: 63.33%
+2025-07-01 10:55:57,208 - INFO - Validation Acc: 64.69%
+2025-07-01 10:56:56,416 - INFO - Epoch 43/100 | Train Loss: 0.9656 | Train Acc: 63.13%
+2025-07-01 10:57:09,573 - INFO - Validation Acc: 64.09%
+2025-07-01 10:58:08,568 - INFO - Epoch 44/100 | Train Loss: 0.9757 | Train Acc: 62.92%
+2025-07-01 10:58:21,620 - INFO - Validation Acc: 64.74%
+2025-07-01 10:59:24,573 - INFO - Epoch 45/100 | Train Loss: 0.9707 | Train Acc: 63.93%
+2025-07-01 10:59:38,654 - INFO - Validation Acc: 64.85%
+2025-07-01 11:00:38,967 - INFO - Epoch 46/100 | Train Loss: 0.9564 | Train Acc: 64.14%
+2025-07-01 11:00:52,030 - INFO - Validation Acc: 64.69%
+2025-07-01 11:01:51,232 - INFO - Epoch 47/100 | Train Loss: 0.9548 | Train Acc: 65.04%
+2025-07-01 11:02:04,317 - INFO - Validation Acc: 63.50%
+2025-07-01 11:03:03,711 - INFO - Epoch 48/100 | Train Loss: 0.9649 | Train Acc: 63.56%
+2025-07-01 11:03:16,784 - INFO - Validation Acc: 64.36%
+2025-07-01 11:04:16,082 - INFO - Epoch 49/100 | Train Loss: 0.9606 | Train Acc: 63.51%
+2025-07-01 11:04:29,080 - INFO - Validation Acc: 65.01%
+2025-07-01 11:04:29,410 - INFO - Checkpoint saved at epoch 48 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 11:04:29,410 - INFO - New best model saved.
+2025-07-01 11:05:28,778 - INFO - Epoch 50/100 | Train Loss: 0.9631 | Train Acc: 63.78%
+2025-07-01 11:05:41,787 - INFO - Validation Acc: 64.69%
+2025-07-01 11:06:41,048 - INFO - Epoch 51/100 | Train Loss: 0.9495 | Train Acc: 64.84%
+2025-07-01 11:06:54,091 - INFO - Validation Acc: 64.42%
+2025-07-01 11:07:53,566 - INFO - Epoch 52/100 | Train Loss: 0.9581 | Train Acc: 63.81%
+2025-07-01 11:08:06,641 - INFO - Validation Acc: 65.17%
+2025-07-01 11:08:07,065 - INFO - Checkpoint saved at epoch 51 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 11:08:07,065 - INFO - New best model saved.
+2025-07-01 11:09:06,320 - INFO - Epoch 53/100 | Train Loss: 0.9525 | Train Acc: 63.88%
+2025-07-01 11:09:19,506 - INFO - Validation Acc: 65.01%
+2025-07-01 11:10:18,539 - INFO - Epoch 54/100 | Train Loss: 0.9393 | Train Acc: 64.31%
+2025-07-01 11:10:31,550 - INFO - Validation Acc: 65.12%
+2025-07-01 11:11:30,551 - INFO - Epoch 55/100 | Train Loss: 0.9325 | Train Acc: 64.68%
+2025-07-01 11:11:43,593 - INFO - Validation Acc: 65.23%
+2025-07-01 11:11:44,051 - INFO - Checkpoint saved at epoch 54 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 11:11:44,051 - INFO - New best model saved.
+2025-07-01 11:12:43,165 - INFO - Epoch 56/100 | Train Loss: 0.9377 | Train Acc: 64.40%
+2025-07-01 11:12:56,223 - INFO - Validation Acc: 64.25%
+2025-07-01 11:13:55,395 - INFO - Epoch 57/100 | Train Loss: 0.9130 | Train Acc: 65.33%
+2025-07-01 11:14:08,448 - INFO - Validation Acc: 65.50%
+2025-07-01 11:14:08,819 - INFO - Checkpoint saved at epoch 56 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 11:14:08,819 - INFO - New best model saved.
+2025-07-01 11:15:07,913 - INFO - Epoch 58/100 | Train Loss: 0.9293 | Train Acc: 64.88%
+2025-07-01 11:15:20,993 - INFO - Validation Acc: 65.39%
+2025-07-01 11:16:19,883 - INFO - Epoch 59/100 | Train Loss: 0.9301 | Train Acc: 64.24%
+2025-07-01 11:16:32,950 - INFO - Validation Acc: 65.06%
+2025-07-01 11:17:31,917 - INFO - Epoch 60/100 | Train Loss: 0.9210 | Train Acc: 64.72%
+2025-07-01 11:17:44,989 - INFO - Validation Acc: 65.77%
+2025-07-01 11:17:45,362 - INFO - Checkpoint saved at epoch 59 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 11:17:45,362 - INFO - New best model saved.
+2025-07-01 11:18:44,616 - INFO - Epoch 61/100 | Train Loss: 0.9035 | Train Acc: 65.86%
+2025-07-01 11:18:57,696 - INFO - Validation Acc: 65.82%
+2025-07-01 11:18:58,134 - INFO - Checkpoint saved at epoch 60 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 11:18:58,134 - INFO - New best model saved.
+2025-07-01 11:19:57,087 - INFO - Epoch 62/100 | Train Loss: 0.9135 | Train Acc: 65.49%
+2025-07-01 11:20:10,254 - INFO - Validation Acc: 65.60%
+2025-07-01 11:21:09,576 - INFO - Epoch 63/100 | Train Loss: 0.9192 | Train Acc: 65.73%
+2025-07-01 11:21:22,612 - INFO - Validation Acc: 64.42%
+2025-07-01 11:22:21,440 - INFO - Epoch 64/100 | Train Loss: 0.8995 | Train Acc: 66.67%
+2025-07-01 11:22:34,486 - INFO - Validation Acc: 65.39%
+2025-07-01 11:23:33,481 - INFO - Epoch 65/100 | Train Loss: 0.9083 | Train Acc: 65.55%
+2025-07-01 11:23:46,443 - INFO - Validation Acc: 65.33%
+2025-07-01 11:24:45,641 - INFO - Epoch 66/100 | Train Loss: 0.9042 | Train Acc: 65.62%
+2025-07-01 11:24:58,652 - INFO - Validation Acc: 64.90%
+2025-07-01 11:25:57,785 - INFO - Epoch 67/100 | Train Loss: 0.9042 | Train Acc: 65.90%
+2025-07-01 11:26:10,815 - INFO - Validation Acc: 65.60%
+2025-07-01 11:27:10,095 - INFO - Epoch 68/100 | Train Loss: 0.8969 | Train Acc: 65.58%
+2025-07-01 11:27:23,152 - INFO - Validation Acc: 65.28%
+2025-07-01 11:28:22,350 - INFO - Epoch 69/100 | Train Loss: 0.8866 | Train Acc: 66.30%
+2025-07-01 11:28:35,400 - INFO - Validation Acc: 65.66%
+2025-07-01 11:29:34,419 - INFO - Epoch 70/100 | Train Loss: 0.9001 | Train Acc: 66.19%
+2025-07-01 11:29:47,499 - INFO - Validation Acc: 66.09%
+2025-07-01 11:29:47,876 - INFO - Checkpoint saved at epoch 69 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 11:29:47,876 - INFO - New best model saved.
+2025-07-01 11:30:46,951 - INFO - Epoch 71/100 | Train Loss: 0.8983 | Train Acc: 66.23%
+2025-07-01 11:30:59,969 - INFO - Validation Acc: 65.33%
+2025-07-01 11:31:58,941 - INFO - Epoch 72/100 | Train Loss: 0.8851 | Train Acc: 66.27%
+2025-07-01 11:32:12,097 - INFO - Validation Acc: 65.98%
+2025-07-01 11:33:11,297 - INFO - Epoch 73/100 | Train Loss: 0.8871 | Train Acc: 66.09%
+2025-07-01 11:33:24,296 - INFO - Validation Acc: 64.90%
+2025-07-01 11:34:23,484 - INFO - Epoch 74/100 | Train Loss: 0.8871 | Train Acc: 67.04%
+2025-07-01 11:34:36,488 - INFO - Validation Acc: 66.25%
+2025-07-01 11:34:36,843 - INFO - Checkpoint saved at epoch 73 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 11:34:36,843 - INFO - New best model saved.
+2025-07-01 11:35:36,182 - INFO - Epoch 75/100 | Train Loss: 0.8745 | Train Acc: 66.60%
+2025-07-01 11:35:49,228 - INFO - Validation Acc: 66.63%
+2025-07-01 11:35:49,591 - INFO - Checkpoint saved at epoch 74 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 11:35:49,591 - INFO - New best model saved.
+2025-07-01 11:36:48,729 - INFO - Epoch 76/100 | Train Loss: 0.8853 | Train Acc: 66.07%
+2025-07-01 11:37:01,775 - INFO - Validation Acc: 64.90%
+2025-07-01 11:38:00,793 - INFO - Epoch 77/100 | Train Loss: 0.8693 | Train Acc: 67.25%
+2025-07-01 11:38:13,889 - INFO - Validation Acc: 66.31%
+2025-07-01 11:39:13,022 - INFO - Epoch 78/100 | Train Loss: 0.8705 | Train Acc: 67.18%
+2025-07-01 11:39:26,078 - INFO - Validation Acc: 66.20%
+2025-07-01 11:40:25,008 - INFO - Epoch 79/100 | Train Loss: 0.8726 | Train Acc: 67.03%
+2025-07-01 11:40:38,029 - INFO - Validation Acc: 65.98%
+2025-07-01 11:41:37,011 - INFO - Epoch 80/100 | Train Loss: 0.8658 | Train Acc: 67.06%
+2025-07-01 11:41:49,971 - INFO - Validation Acc: 66.20%
+2025-07-01 11:42:48,803 - INFO - Epoch 81/100 | Train Loss: 0.8670 | Train Acc: 67.84%
+2025-07-01 11:43:01,870 - INFO - Validation Acc: 66.63%
+2025-07-01 11:44:01,122 - INFO - Epoch 82/100 | Train Loss: 0.8611 | Train Acc: 68.35%
+2025-07-01 11:44:14,300 - INFO - Validation Acc: 66.41%
+2025-07-01 11:45:13,588 - INFO - Epoch 83/100 | Train Loss: 0.8763 | Train Acc: 67.25%
+2025-07-01 11:45:26,611 - INFO - Validation Acc: 65.77%
+2025-07-01 11:46:25,900 - INFO - Epoch 84/100 | Train Loss: 0.8703 | Train Acc: 67.72%
+2025-07-01 11:46:38,978 - INFO - Validation Acc: 66.04%
+2025-07-01 11:47:38,321 - INFO - Epoch 85/100 | Train Loss: 0.8785 | Train Acc: 67.14%
+2025-07-01 11:47:51,406 - INFO - Validation Acc: 66.14%
+2025-07-01 11:48:50,824 - INFO - Epoch 86/100 | Train Loss: 0.8590 | Train Acc: 67.16%
+2025-07-01 11:49:03,858 - INFO - Validation Acc: 66.14%
+2025-07-01 11:50:02,866 - INFO - Epoch 87/100 | Train Loss: 0.8523 | Train Acc: 67.55%
+2025-07-01 11:50:15,894 - INFO - Validation Acc: 66.85%
+2025-07-01 11:50:16,256 - INFO - Checkpoint saved at epoch 86 to runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+2025-07-01 11:50:16,256 - INFO - New best model saved.
+2025-07-01 11:51:15,324 - INFO - Epoch 88/100 | Train Loss: 0.8677 | Train Acc: 67.04%
+2025-07-01 11:51:28,356 - INFO - Validation Acc: 65.93%
+2025-07-01 11:52:27,527 - INFO - Epoch 89/100 | Train Loss: 0.8613 | Train Acc: 67.52%
+2025-07-01 11:52:40,588 - INFO - Validation Acc: 66.41%
+2025-07-01 11:53:39,879 - INFO - Epoch 90/100 | Train Loss: 0.8590 | Train Acc: 67.33%
+2025-07-01 11:53:52,899 - INFO - Validation Acc: 66.31%
+2025-07-01 11:54:52,089 - INFO - Epoch 91/100 | Train Loss: 0.8538 | Train Acc: 67.94%
+2025-07-01 11:55:05,177 - INFO - Validation Acc: 66.25%
+2025-07-01 11:56:04,394 - INFO - Epoch 92/100 | Train Loss: 0.8691 | Train Acc: 67.08%
+2025-07-01 11:56:17,398 - INFO - Validation Acc: 66.41%
+2025-07-01 11:57:18,739 - INFO - Epoch 93/100 | Train Loss: 0.8643 | Train Acc: 68.01%
+2025-07-01 11:57:32,701 - INFO - Validation Acc: 66.14%
+2025-07-01 11:58:34,013 - INFO - Epoch 94/100 | Train Loss: 0.8601 | Train Acc: 68.05%
+2025-07-01 11:58:47,061 - INFO - Validation Acc: 66.14%
+2025-07-01 11:59:46,355 - INFO - Epoch 95/100 | Train Loss: 0.8814 | Train Acc: 66.59%
+2025-07-01 11:59:59,361 - INFO - Validation Acc: 66.14%
+2025-07-01 12:00:58,619 - INFO - Epoch 96/100 | Train Loss: 0.8714 | Train Acc: 67.52%
+2025-07-01 12:01:11,668 - INFO - Validation Acc: 66.74%
+2025-07-01 12:02:10,985 - INFO - Epoch 97/100 | Train Loss: 0.8831 | Train Acc: 66.61%
+2025-07-01 12:02:24,021 - INFO - Validation Acc: 66.41%
+2025-07-01 12:03:23,124 - INFO - Epoch 98/100 | Train Loss: 0.8687 | Train Acc: 66.90%
+2025-07-01 12:03:36,111 - INFO - Validation Acc: 65.60%
+2025-07-01 12:04:35,399 - INFO - Epoch 99/100 | Train Loss: 0.8580 | Train Acc: 67.85%
+2025-07-01 12:04:48,443 - INFO - Validation Acc: 65.66%
+2025-07-01 12:05:47,547 - INFO - Epoch 100/100 | Train Loss: 0.8706 | Train Acc: 66.90%
+2025-07-01 12:06:02,363 - INFO - Validation Acc: 65.77%
+2025-07-01 12:06:02,363 - INFO - Training complete.
