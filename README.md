@@ -45,6 +45,29 @@ In CREMA-D, filenames like 1001_IEO_HAP_HI.wav encode the actor ID in the first 
 
 By leveraging grouped splitting, the framework guarantees speaker-independent evaluation and robust generalization to unseen speakers, which is crucial for real-world emotion recognition systems.
 
+## Data Augmentation Strategy
+
+This dataset implements on-the-fly data augmentation during training. This means that for each audio file retrieved during a training epoch, random transformations are applied to the waveform.
+
+### Key Principles:
+
+* **Speaker Independence:** Augmentations like Pitch Shift, Time Stretch, and Gain help to make the model robust to speaker-specific vocal characteristics (e.g., natural pitch, speaking rate, loudness), encouraging it to learn emotion-specific features that generalize across different voices.
+* **Increased Data Diversity:** By randomly transforming samples, the effective size and variability of the training data are significantly increased without requiring additional storage.
+* **Regularization:** This acts as a powerful regularization technique, preventing the model from overfitting to the exact characteristics of the original, unaugmented training samples.
+* **On-the-Fly Processing:** Transformations are applied within the `__getitem__` method of the PyTorch Dataset. This is crucial because:
+    * It ensures a new, random set of augmentation parameters is applied each time a sample is requested (e.g., across different epochs or batches).
+    * It leverages PyTorch's `DataLoader` `num_workers` to perform these computationally intensive operations on the CPU in parallel, preventing the GPU from becoming a bottleneck and speeding up training.
+* **Training Only:** Augmentations are strictly applied ONLY when the `is_train` flag is set to `True` (i.e., for the training dataset). The validation and test datasets remain untouched and reflect the original, unaugmented data. This ensures an unbiased and realistic evaluation of the model's generalization performance on unseen data.
+
+### Applied Augmentations:
+
+* **Small Random Noise:** Adds a tiny amount of Gaussian noise to the waveform.
+* **Pitch Shift:** Randomly shifts the pitch up or down by a few semitones.
+* **Time Stretch:** Randomly changes the playback speed of the audio.
+* **Gain:** Randomly adjusts the overall volume (loudness) of the audio.
+
+Each of these augmentations is applied probabilistically (e.g., typically with a 50% chance) to further diversify the training experience for the model.
+
 ## Folder Structure
 
 ```text
