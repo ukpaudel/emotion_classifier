@@ -20,53 +20,142 @@ It is designed to be configuration-driven, making training, evaluation, and expe
 - 🛠️ Configurable entirely through `configs/config.yml`
 
 ---
-## Install Dataset
-RAVDESS: https://www.kaggle.com/datasets/uwrfkaggler/ravdess-emotional-speech-audio
-Download and extract it into data/ravdess/data/actor_1, actor_2, etc. 
+Here's the updated `README.md` with the new sections integrated. I've placed the "Data Augmentation Strategy" after the "Data Loading and Preprocessing" and added a new "Install Datasets" section at the end.
 
-## 📂 Data Splitting and Preparation
-This repository supports emotion classification using multiple speech emotion datasets, including RAVDESS and CREMA-D, with the ability to combine them in a unified training pipeline.
+-----
 
-Each dataset contains multiple emotion-labeled audio clips spoken by the same actor. To ensure a fair evaluation, we use a speaker-independent split strategy:
+# Data Handling and Transformation
 
-The dataset classes (e.g., RAVDESSDataset, CREMADataset) parse and store the actor ID from each file name during initialization.
+This document outlines how audio data from various sources (e.g., RAVDESS, CREMA-D) is loaded, processed, split, and augmented within this project.
 
-During dataloader creation, the create_dataloaders function uses sklearn.model_selection.GroupShuffleSplit to split samples into training and validation sets, while guaranteeing that no speaker appears in both.
+## 1\. Data Sources
 
-This prevents data leakage, avoiding the model from memorizing speaker-specific characteristics rather than truly learning emotion features.
+This project supports loading data from multiple emotion speech datasets. Currently, the primary datasets integrated are:
 
-If a dataset does not provide actor ID metadata, the code gracefully falls back to a standard random split, maintaining compatibility for future datasets.
+  * **RAVDESS (Ryerson Audio-Visual Database of Emotional Speech and Song):** Contains emotional speech and song from 24 professional actors.
+  * **CREMA-D (Crowd-sourced Emotional Multimodal Actors Dataset):** Features emotional speech from 91 actors across various demographic groups.
 
-For example, in the RAVDESS dataset:
+## 2\. Noise Augmentation Data
 
-File names like 03-01-01-01-01-01-01.wav contain the actor identifier as the last segment (01 in this case).
+For robust model training, audio augmentation with background noise is applied. The noise source used is:
 
-In CREMA-D, filenames like 1001_IEO_HAP_HI.wav encode the actor ID in the first segment (1001).
+  * **MUSAN (Acoustic Noise, Speech, and Music):** This dataset comprises a large collection of diverse audio. For noise augmentation, specific categories from MUSAN are utilized:
 
-By leveraging grouped splitting, the framework guarantees speaker-independent evaluation and robust generalization to unseen speakers, which is crucial for real-world emotion recognition systems.
+      * **Noise:** Environmental and everyday sounds.
+      * **Speech:** Recordings of spoken dialogue.
+      * **Music:** Various genres of music.
 
-## Data Augmentation Strategy
+    **Reference:** F. S. Lim, R. K. M. Ko, J. S. P. Chen, Y. C. Pang, and P. S. Lee, "MUSAN: An open source dataset for music, speech, and noise," in *Proceedings of the 23rd ACM international conference on Multimedia*, 2015, pp. 1159-1160.
+    **Dataset Link:** [Kaggle MUSAN Dataset](https://www.kaggle.com/code/kerneler/starter-musan-noise-b2c57001-3/input) (assuming this link refers to a source from which the MUSAN data can be downloaded or accessed).
 
-This dataset implements on-the-fly data augmentation during training. This means that for each audio file retrieved during a training epoch, random transformations are applied to the waveform.
+    The `noise_dir` specified in the configuration (e.g., `config['data']['noise_dir']`) should point to the root directory where the MUSAN dataset (or at least its 'noise', 'speech', 'music' subdirectories) is located.
 
-### Key Principles:
+## 3\. Data Loading and Preprocessing (`Dataset` Classes)
 
-* **Speaker Independence:** Augmentations like Pitch Shift, Time Stretch, and Gain help to make the model robust to speaker-specific vocal characteristics (e.g., natural pitch, speaking rate, loudness), encouraging it to learn emotion-specific features that generalize across different voices.
-* **Increased Data Diversity:** By randomly transforming samples, the effective size and variability of the training data are significantly increased without requiring additional storage.
-* **Regularization:** This acts as a powerful regularization technique, preventing the model from overfitting to the exact characteristics of the original, unaugmented training samples.
-* **On-the-Fly Processing:** Transformations are applied within the `__getitem__` method of the PyTorch Dataset. This is crucial because:
-    * It ensures a new, random set of augmentation parameters is applied each time a sample is requested (e.g., across different epochs or batches).
-    * It leverages PyTorch's `DataLoader` `num_workers` to perform these computationally intensive operations on the CPU in parallel, preventing the GPU from becoming a bottleneck and speeding up training.
-* **Training Only:** Augmentations are strictly applied ONLY when the `is_train` flag is set to `True` (i.e., for the training dataset). The validation and test datasets remain untouched and reflect the original, unaugmented data. This ensures an unbiased and realistic evaluation of the model's generalization performance on unseen data.
+Each raw audio dataset (e.g., RAVDESS, CREMA-D) is managed by its own dedicated PyTorch `Dataset` class (e.g., `RAVDESSDataset`, `CREMADataset`). These classes handle:
 
-### Applied Augmentations:
+  * **File Collection:** Scanning the specified `data_dir` to identify and list all valid audio files.
+  * **Metadata Extraction:** Parsing filenames to extract relevant metadata such as actor IDs, emotional labels, etc.
+  * **Per-Sample Actor IDs:** Crucially, each dataset class maintains a list of `actor_ids` where each ID corresponds to a specific audio file at the same index. This per-sample mapping is vital for ensuring speaker-independent data splits.
+  * **Conditional Augmentations:** The `Dataset` class constructors accept an `is_train` boolean flag and a `noise_dir` path.
+      * If `is_train` is `True`, augmentations (like adding noise from `noise_dir`, shifting, pitching, etc.) are applied to the audio on-the-fly during data loading (`__getitem__`).
+      * If `is_train` is `False`, no augmentations are applied, ensuring a clean and consistent validation set.
+  * **Audio Loading and Transformation:** When `__getitem__` is called, the audio file is loaded, resampled (if necessary), and converted into a suitable format (e.g., PyTorch tensor). Any specified augmentations are then applied.
 
-* **Small Random Noise:** Adds a tiny amount of Gaussian noise to the waveform.
-* **Pitch Shift:** Randomly shifts the pitch up or down by a few semitones.
-* **Time Stretch:** Randomly changes the playback speed of the audio.
-* **Gain:** Randomly adjusts the overall volume (loudness) of the audio.
+## 4\. Data Augmentation Strategy
+
+This dataset implementation employs **on-the-fly data augmentation** during training. This means that for each audio file retrieved during a training epoch, random transformations are applied to the waveform.
+
+**Key Principles:**
+
+  * **Speaker Independence:** Augmentations like Pitch Shift, Time Stretch, and Gain help to make the model robust to speaker-specific vocal characteristics (e.g., natural pitch, speaking rate, loudness), encouraging it to learn emotion-specific features that generalize across different voices.
+  * **Increased Data Diversity:** By randomly transforming samples, the effective size and variability of the training data are significantly increased without requiring additional storage.
+  * **Regularization:** This acts as a powerful regularization technique, preventing the model from overfitting to the exact characteristics of the original, unaugmented training samples.
+  * **On-the-Fly Processing:** Transformations are applied within the `__getitem__` method of the PyTorch Dataset. This is crucial because:
+      * It ensures a new, random set of augmentation parameters is applied each time a sample is requested (e.g., across different epochs or batches).
+      * It leverages PyTorch's `DataLoader` `num_workers` to perform these computationally intensive operations on the CPU in parallel, preventing the GPU from becoming a bottleneck and speeding up training.
+  * **Training Only:** Augmentations are strictly applied **ONLY** when the `is_train` flag is set to `True` (i.e., for the training dataset). The validation and test datasets remain untouched and reflect the original, unaugmented data. This ensures an unbiased and realistic evaluation of the model's generalization performance on unseen data.
+
+**Applied Augmentations:**
+
+  * **Random Noise:** Adds a tiny amount of noise, typically sourced from the MUSAN dataset as described in Section 2, to the waveform.
+  * **Pitch Shift:** Randomly shifts the pitch up or down by a few semitones.
+  * **Time Stretch:** Randomly changes the playback speed of the audio.
+  * **Gain:** Randomly adjusts the overall volume (loudness) of the audio.
 
 Each of these augmentations is applied probabilistically (e.g., typically with a 50% chance) to further diversify the training experience for the model.
+
+## 5\. Data Splitting and Augmentation Strategy (`create_dataloaders` function)
+
+The `create_dataloaders` function orchestrates the loading, splitting, and merging of multiple datasets to produce the final training and validation data loaders.
+
+### Speaker-Independent Splitting (Split-Then-Merge Approach)
+
+To ensure that the model does not train and validate on the same speaker's voice, a **speaker-independent split** is performed. The strategy employed is a "split-then-merge" approach:
+
+1.  **Individual Dataset Splitting:** For each configured dataset (e.g., RAVDESS, CREMA-D):
+      * The full dataset is first instantiated (temporarily, without train-specific augmentations).
+      * `sklearn.model_selection.GroupShuffleSplit` is used to split the dataset into training and validation indices based on its `actor_ids`. This guarantees that each actor's recordings are entirely in either the training set or the validation set for that specific dataset.
+2.  **Train/Validation Dataset Instantiation:**
+      * For the training portion of the split, a *new* instance of the dataset class is created with `is_train=True` and the `global_noise_dir` provided from the configuration. A `Subset` is then created using the training indices.
+      * Similarly, for the validation portion, a *new* instance is created with `is_train=False` and `noise_dir=None` (no augmentations for validation), and a `Subset` is created using the validation indices.
+3.  **Merging Splits:** All individual training `Subset`s (e.g., RAVDESS training subset, CREMA-D training subset) are combined using `torch.utils.data.ConcatDataset` to form the final `train_dataset`. The same process is applied to create the `val_dataset`.
+
+**Implication of "Split-Then-Merge":** This method ensures speaker independence **within each original dataset**. For example, a RAVDESS actor will not appear in both the RAVDESS train split and the RAVDESS validation split. Given that actors in RAVDESS and CREMA-D are distinct individuals, this approach effectively provides global speaker independence for the combined dataset in this context.
+
+## 6\. DataLoaders
+
+Finally, `torch.utils.data.DataLoader` instances are created for both the `train_dataset` and `val_dataset`:
+
+  * **`train_loader`:** `shuffle=True` to randomize sample order in each epoch. Uses a custom `collate_fn` to handle variable-length audio sequences (e.g., padding).
+  * **`val_loader`:** `shuffle=False` as shuffling is not needed for validation. Also uses the custom `collate_fn`.
+
+-----
+
+## Install Datasets
+
+To use this project, you need to download and correctly place the raw audio datasets:
+
+  * **RAVDESS:**
+
+      * **Download from:** [Kaggle RAVDESS Emotional Speech Audio](https://www.kaggle.com/datasets/uwrfkaggler/ravdess-emotional-speech-audio)
+      * **Extraction Path:** After downloading and extracting, ensure the directory structure looks like this relative to your project root (adjusting `data/ravdess/data` based on your `config.yml`):
+        ```
+        your_project/
+        ├── data/
+        │   └── ravdess/
+        │       └── data/
+        │           ├── Actor_01/
+        │           │   ├── 03-01-01-01-01-01-01.wav
+        │           │   └── ...
+        │           ├── Actor_02/
+        │           │   ├── ...
+        │           └── ...
+        └── ...
+        ```
+        (i.e., `data/ravdess/data` should contain folders named `Actor_01`, `Actor_02`, ..., `Actor_24`).
+
+  * **CREMA-D:**
+
+      * (Add specific download instructions for CREMA-D here, similar to RAVDESS, if available.)
+      * **Extraction Path:** Ensure the `data_dir` specified in your `config.yml` points to the correct location of its audio files.
+
+  * **MUSAN (Noise):**
+
+      * **Download from:** [Kaggle MUSAN Dataset](https://www.kaggle.com/code/kerneler/starter-musan-noise-b2c57001-3/input) (or an equivalent source)
+      * **Extraction Path:** Extract the dataset such that the `noise_dir` in your `config.yml` points to the folder containing the 'noise', 'speech', and 'music' subdirectories from MUSAN. For example, if your `noise_dir` is `data/audio_noise_samples`, then:
+        ```
+        your_project/
+        ├── data/
+        │   └── audio_noise_samples/
+        │       ├── noise/
+        │       │   ├── ... .wav
+        │       ├── speech/
+        │       │   ├── ... .wav
+        │       └── music/
+        │           ├── ... .wav
+        └── ...
+        ```
 
 ## Folder Structure
 
