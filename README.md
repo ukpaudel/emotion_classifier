@@ -12,15 +12,14 @@ It is designed to be configuration-driven, making training, evaluation, and expe
 - ❄️ Encoder freezing or selective fine-tuning of the last *N* layers (`unfreeze_last_n_layers`)
 - 🧩 Dynamic masking support for variable-length audio
 - 🗂️ Extensible to new datasets — just add a new dataset loader like `ravdess_dataset.py`
+- 🗂️ Noise augmentation datasets to train the audio with real world noise (MUSAN)  
+- 🗂️ Training data augmentation with Gain (volume adjustement), Gaussian Noise, Musan Noise 
 - 💾 Pretrained weight loading with `pretrained_weights.enabled: true`
 - 📝 TensorBoard integration and logging for visualization
 - 🔄 Checkpoint-based resume functionality
 - 🎯 Supports single-file inference and real-time emotion detection with ASR
-- 🐛 Automatic saving of misclassified audio samples for inspection (Need to update)
+- 🐛 Automatic saving of misclassified audio samples for inspection 
 - 🛠️ Configurable entirely through `configs/config.yml`
-
----
-Here's the updated `README.md` with the new sections integrated. I've placed the "Data Augmentation Strategy" after the "Data Loading and Preprocessing" and added a new "Install Datasets" section at the end.
 
 -----
 
@@ -113,7 +112,7 @@ Finally, `torch.utils.data.DataLoader` instances are created for both the `train
 
 -----
 
-## Install Datasets
+## 7\. Install Datasets
 
 To use this project, you need to download and correctly place the raw audio datasets:
 
@@ -158,7 +157,7 @@ To use this project, you need to download and correctly place the raw audio data
         └── ...
         ```
 
-## Folder Structure
+## \8. Folder Structure
 
 ```text
 emotion_classifier/
@@ -213,7 +212,7 @@ emotion_classifier/
 ```
 
 
-## Architecture
+## \9. Architecture
 ```
                ┌───────────────────────────────┐
                │         Waveform Input        │
@@ -253,7 +252,7 @@ emotion_classifier/
 
 
 ```
-## ⚙️ Installation
+## \10. ⚙️ Installation
 
 ```bash
 git clone https://github.com/ukpaudel/emotion_classifier.git
@@ -262,7 +261,7 @@ pip install -e .
 
 ```
 
-## Usage
+## \11. Usage
 
 ### Training
 
@@ -289,29 +288,62 @@ To run go to the root folder ```cd emotion_classifier\emotion_classifier```
 for single audio run the following. It uses preloaded files in the root directory.
 ``` > python .\inference\inference.py```
 
-## Results/Verdicts.
+## \12. Results
 
 Comparison of Different Trainings (see ```runs/example_comparisons.png``` for details):
 
-- Achieved up to ~80% classification accuracy using the RAVDESS dataset alone.
+- Achieved up to ~80% classification accuracy using the RAVDESS dataset alone (though there are concern about speaker independence in this dataset).
 
-- Adding the CREMA-D dataset reduced classification accuracy to around 70%.
+- Adding the CREMA-D dataset and addressing speaker independence reduced classification accuracy to around 67%.
 
 - Unfreezing the encoder layers gave inconsistent results. For the RAVDESS dataset, unfreezing improved performance, but I suspect the small validation dataset may have caused overfitting.
 
-- Wav2Vec2 showed poorer performance overall.
+- Wav2Vec2 showed poorer performance overall the HuBERT.
 
 - HuBERT achieved higher classification accuracy and converged in fewer epochs when trained with frozen encoder layers on the RAVDESS dataset.
-  
+
+![confusion_animation](https://github.com/user-attachments/assets/4adf6350-f210-4f7b-bf4b-563de67e32de)
+
 - Realtime inference  has a mixed results. Even I have trouble classifying emotions from audio. Perhaps the idea of classifying emotion from a few second long audio is an unrealistic goals? Once could train to use much longer time window, 20-30 seconds to classify the overall tone of the conversation? 
 
 
 With frozen encoder layers and only RAVDEV audio dataset. ![image](https://github.com/user-attachments/assets/a06e94a5-a9e8-4f12-ae0d-a7df148ec078)
 Example of Tensorboard: <img width="1000" alt="example_comparisons" src="https://github.com/user-attachments/assets/9764f031-abff-4670-a537-e574633b5f28" />
-Confusion Matrix: 
+
 Example of Inference: Both ASR text and emotions are labeled. I am not happy with the performance on the realtime audio despite the validation accuracy being high. Something ain't right...
 ![image](https://github.com/user-attachments/assets/da4f1505-5996-4acc-bc7e-9d1218fd73a4)
-![confusion_animation](https://github.com/user-attachments/assets/4adf6350-f210-4f7b-bf4b-563de67e32de)
+
+## \13. Limitations and Issues
+Problem State: Discrepancy Between Offline Evaluation and Real-time Inference
+
+Observation:
+The current emotion classification model, trained on the RAVDESS and CREMA-D datasets with added MUSAN noise augmentation, achieves a decent classification accuracy of approximately 68% on its 8 emotion classes during offline validation. However, when the trained model is deployed for real-time inference on live audio streams, its performance degrades significantly, failing to accurately classify emotions.
+
+Hypothesized Causes for Performance Degradation:
+
+The core issue appears to stem from a domain mismatch between the controlled, augmented training data and the unpredictable nature of real-time audio. Several factors are believed to contribute to this discrepancy:
+
+Lack of Real-time Augmentation Coverage (Feature Robustness):
+
+While MUSAN noise is applied during training, other crucial augmentations like audio masking (Time Masking, Frequency Masking / SpecAugment) are not currently utilized. These techniques are vital for making the model robust to corrupted or incomplete audio segments. Without them, the model may struggle with real-world scenarios where parts of the signal might be obscured or missing.
+
+Furthermore, even the applied MUSAN noise might not fully capture the diversity and characteristics of real-world environmental noise encountered in live scenarios.
+
+Temporal Distribution Mismatch:
+
+Training data often consists of pre-segmented audio clips with relatively consistent durations. Real-time audio, however, features variable speech tempos, pauses, and overall duration, which may not be adequately represented in the training augmentations (e.g., lack of Time Stretch during training or insufficient variability in sample lengths). This can lead to a model that is overfit to specific temporal patterns of the training data.
+
+Real-world Audio Imperfections and Variability:
+
+Live audio inherently contains imperfections not fully present or accounted for in curated datasets:
+
+Unforeseen Noise Types: Background conversations, sudden loud noises, or specific ambient sounds that differ from the MUSAN categories.
+
+Microphone Variability: Differences in microphone quality, distance, and placement (e.g., built-in laptop mic vs. headset vs. external mic) can introduce spectral and amplitude distortions.
+
+Acoustic Environments: Variations in room acoustics, reverberation, and echoes in real-world settings that are absent in the anechoic or controlled recording conditions of the datasets.
+
+Non-standard Speech Characteristics: Subtle variations in speaking style, volume, or voice quality that fall outside the learned distribution of the training data.
 
 ## Author
 Uttam Paudel

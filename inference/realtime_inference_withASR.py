@@ -35,20 +35,25 @@ class RealTimeEmotionAndASR:
         self.device = device
         self.emotion_model = emotion_model.to(self.device)
         self.sample_rate = sample_rate
-        self.window_size = 5 * sample_rate
+        
+        self.emotion_window_sec = 3.0 
+        self.emotion_window_samples = int(self.emotion_window_sec * sample_rate)
+        
+        self.asr_window_sec = 3.0
+        self.asr_window_samples = int(self.asr_window_sec * sample_rate)
+
+        self.buffer = np.zeros(self.asr_window_samples, dtype=np.float32)
+        
         self.step_size = int(sample_rate * 0.05)
-        self.buffer = np.zeros(self.window_size, dtype=np.float32)
+        self.classify_interval_sec = 3.0
+        self.classify_interval_samples = int(self.classify_interval_sec * sample_rate)
 
         self.total_samples_seen = 0
         self.samples_since_last_classify = 0
-        self.classify_interval = int(sample_rate * 5)
-        self.averaging_chuncks = int(self.window_size/self.classify_interval)
-
-        # load ASR model
-
+        
+        # Load ASR model
         self.asr_processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-large-960h-lv60-self")
-        print(self.asr_processor)
-
+        print(f"[ASR] Processor loaded: {self.asr_processor}")
         self.asr_model = Wav2Vec2ForCTC.from_pretrained("facebook/wav2vec2-large-960h-lv60-self").to(self.device)
         self.asr_model.eval()
         self.current_text = ""
@@ -64,128 +69,184 @@ class RealTimeEmotionAndASR:
         self.label_history = deque(maxlen=30)
         self.need_classify = False
 
-        # plot
-        self.fig, (self.ax_bar, self.ax_wave) = plt.subplots(2, 1, figsize=(8, 4))
+        # --- Plotting Configuration ---
+        self.downsample_factor = 50 # Re-introduced for visual clarity of raw waveform
+        self.use_envelope_plot = False # Set to False for downsampled raw waveform
+        self.envelope_smoothing_window = int(sample_rate * 0.01) # 10ms for smoothing
 
-        # emotion bar
-        self.bar = self.ax_bar.bar(self.emotion_map.values(), self.current_probs)
+        # Plot setup
+        self.fig, (self.ax_bar, self.ax_wave) = plt.subplots(2, 1, figsize=(10, 6))
+
+        # Emotion bar plot
+        self.bar = self.ax_bar.bar(self.emotion_map.values(), self.current_probs, color='skyblue')
         self.ax_bar.set_ylim(0, 1)
         self.ax_bar.set_ylabel("Probability")
         self.ax_bar.set_title("Real-time Emotion Probabilities")
-        self.ax_bar.tick_params(axis='x', rotation=45)
+        self.ax_bar.tick_params(axis='x', rotation=45) # ha='right' was the error, changed back to original for comment
 
-        # waveform
-        self.wave_line, = self.ax_wave.plot([], [], lw=1)
-        self.ax_wave.set_title("Rolling Waveform with Emotion + ASR")
-        self.ax_wave.set_xlabel("Downsampled Time")
+        # Waveform plot
+        self.wave_line, = self.ax_wave.plot([], [], lw=1, color='darkblue')
+        self.ax_wave.set_title("Rolling Waveform with Emotion & ASR")
+        self.ax_wave.set_xlabel("Time (seconds)")
+        self.ax_wave.set_xlim(0, self.asr_window_sec) 
+        self.ax_wave.set_ylim(-1.0, 1.0) 
 
-        # pinned emotion text
+        # Pinned emotion text
         self.emotion_text_handle = self.ax_wave.text(
-            0.95, 0.9, "", transform=self.ax_wave.transAxes,
+            0.98, 0.9, "", transform=self.ax_wave.transAxes,
             fontsize=14, color="red", ha="right", va="center"
         )
 
-        # pinned ASR text
+        # Pinned ASR text
         self.asr_text_handle = self.ax_wave.text(
-            0.95, 0.8, "", transform=self.ax_wave.transAxes,
-            fontsize=12, color="blue", ha="right", va="center"
+            0.02, 0.9, "", transform=self.ax_wave.transAxes,
+            fontsize=12, color="blue", ha="left", va="center"
         )
+
+        self.rms_threshold = 0.015
+        self.silence_emotion_label = "Silence/No Speech"
+
 
     def audio_callback(self, indata, frames, time, status):
         if status:
             print(status)
         samples = indata[:, 0]
+        
+        # Normalize incoming samples to [-1, 1] range if needed
+        #max_abs_val = np.max(np.abs(samples))
+        #if max_abs_val > 0:
+        #    samples = samples / max_abs_val
+        
         self.buffer = np.roll(self.buffer, -len(samples))
         self.buffer[-len(samples):] = samples
 
         self.samples_since_last_classify += len(samples)
         self.total_samples_seen += len(samples)
 
-        if self.samples_since_last_classify >= self.classify_interval:
+        if self.samples_since_last_classify >= self.classify_interval_samples:
             self.need_classify = True
             self.samples_since_last_classify = 0
 
     def classify_and_transcribe(self):
-        buffer_rms = np.sqrt(np.mean(self.buffer ** 2))
-        if buffer_rms < 0.01:
-            print(f"[INFO] Skipping classification and ASR (low RMS={buffer_rms:.5f})")
-            self.current_probs = 0*self.current_probs
-            self.current_text = ""
-            self.current_emotion = "Silence"
+        current_buffer_segment = self.buffer.copy()
+        
+        buffer_rms = np.sqrt(np.mean(current_buffer_segment ** 2))
 
+        if buffer_rms < self.rms_threshold:
+            print(f"[INFO] Skipping classification and ASR (low RMS={buffer_rms:.5f} < {self.rms_threshold:.5f})")
+            self.current_probs = np.zeros(len(self.emotion_map))
+            self.current_text = ""
+            self.current_emotion = self.silence_emotion_label
             return
 
-        # ASR
-        inputs = self.asr_processor(self.buffer, return_tensors="pt", sampling_rate=self.sample_rate)
+        # ASR Processing
+        inputs = self.asr_processor(current_buffer_segment, return_tensors="pt", sampling_rate=self.sample_rate)
         input_values = inputs.input_values.to(self.device)
         with torch.no_grad():
             logits = self.asr_model(input_values).logits
+        
         pred_ids = torch.argmax(logits, dim=-1)
         transcription = self.asr_processor.decode(pred_ids[0])
-        self.current_text = transcription
-        print(f"[ASR] {transcription}")
+        self.current_text = transcription.strip()
+        print(f"[ASR] {self.current_text}")
 
-        # EMOTION
-        chunk_size = self.sample_rate
-        chunk_preds = []
-        for i in range(self.averaging_chuncks ):
-            start = i * chunk_size
-            end = start + chunk_size
-            chunk = self.buffer[start:end]
-            waveform = torch.from_numpy(chunk).unsqueeze(0).to(self.device)
-            lengths = torch.tensor([waveform.shape[1]]).to(self.device)
-            with torch.no_grad():
-                output = self.emotion_model(waveform, lengths)
-                probs = F.softmax(output, dim=-1)
-                pred_idx = torch.argmax(probs, dim=-1).item()
-                chunk_preds.append(pred_idx)
-        majority_class = Counter(chunk_preds).most_common(1)[0][0]
-        self.current_emotion = self.emotion_map[majority_class]
+        # EMOTION Classification
+        emotion_segment = current_buffer_segment[-self.emotion_window_samples:]
+        waveform = torch.from_numpy(emotion_segment).unsqueeze(0).to(self.device)
+        lengths = torch.tensor([self.emotion_window_samples]).to(self.device) 
+        
+        with torch.no_grad():
+            output = self.emotion_model(waveform, lengths)
+            probs = F.softmax(output, dim=-1)
+            
         self.current_probs = probs.squeeze().cpu().numpy()
-        print(f"[EMOTION] Aggregated emotion over 5s: {self.current_emotion}")
+        majority_class_idx = torch.argmax(probs, dim=-1).item()
+        self.current_emotion = self.emotion_map[majority_class_idx]
+
+        print(f"[EMOTION] Classified emotion: {self.current_emotion} (Confidence: {self.current_probs[majority_class_idx]:.2f})")
 
         self.label_history.append((self.current_emotion, self.total_samples_seen))
+
 
     def update_plot(self, frame):
         if self.need_classify:
             self.classify_and_transcribe()
             self.need_classify = False
 
-        # emotion bar
-        for bar, p in zip(self.bar, self.current_probs):
-            bar.set_height(p)
+        # Emotion bar update
+        for i, bar in enumerate(self.bar):
+            bar.set_height(self.current_probs[i])
+            if self.emotion_map[i] == self.current_emotion:
+                bar.set_color('coral')
+            else:
+                bar.set_color('skyblue')
+        self.ax_bar.set_title(f"Real-time Emotion Probabilities: {self.current_emotion}")
 
-        # waveform
-        downsample_factor = 100
-        ds_wave = self.buffer[::downsample_factor]
-        x_vals = np.arange(len(ds_wave))
-        self.wave_line.set_ydata(ds_wave)
-        self.wave_line.set_xdata(x_vals)
-        self.ax_wave.relim()
-        self.ax_wave.autoscale_view()
 
-        # update emotion pinned text
-        self.emotion_text_handle.set_text(self.current_emotion)
+        # --- Waveform plot update logic ---
+        current_data = self.buffer # Always work from the full buffer
 
-        # update ASR pinned text
-        self.asr_text_handle.set_text(self.current_text)
+        if self.use_envelope_plot:
+            # Calculate rectified and smoothed envelope
+            abs_data = np.abs(current_data)
+            
+            # Simple moving average for smoothing
+            if self.envelope_smoothing_window > 0:
+                kernel = np.ones(self.envelope_smoothing_window) / self.envelope_smoothing_window
+                smoothed_data = np.convolve(abs_data, kernel, mode='valid')
+            else:
+                smoothed_data = abs_data 
+            
+            # --- NEW: Downsample the smoothed data for plotting ---
+            plot_data = smoothed_data[::self.downsample_factor]
+            # Adjust time axis to match the downsampled data points
+            plot_x = np.linspace(0, self.asr_window_sec, len(plot_data))
+            
+            #self.ax_wave.set_ylim(0, 1.0) # Envelope is always positive
+            self.wave_line.set_color('purple') # Color for envelope
+            self.wave_line.set_linewidth(1.5) # Slightly thicker for envelope
+        else:
+            # Downsampled raw waveform
+            plot_data = current_data[::self.downsample_factor]
+            plot_x = np.linspace(0, self.asr_window_sec, len(plot_data))
+            
+            #self.ax_wave.set_ylim(-1.0, 1.0) # Raw waveform is bipolar
+            self.wave_line.set_color('darkblue') # Color for raw waveform
+            self.wave_line.set_linewidth(1) # Thinner for raw waveform
+
+        self.wave_line.set_ydata(plot_data)
+        self.wave_line.set_xdata(plot_x)
+        
+        # Update text annotations
+        self.emotion_text_handle.set_text(f"Emotion: {self.current_emotion}")
+        self.asr_text_handle.set_text(f"Transcript: [{self.current_text}]" if self.current_text else "ASR: No Speech")
 
         return self.bar, self.wave_line, self.emotion_text_handle, self.asr_text_handle
 
     def run(self):
-        with sd.InputStream(
-            callback=self.audio_callback,
-            channels=1,
-            samplerate=self.sample_rate,
-            blocksize=self.step_size,
-            device=3  # change if needed
-        ):
-            ani = FuncAnimation(self.fig, self.update_plot, interval=50)
-            plt.tight_layout()
-            plt.show()
+        try:
+            with sd.InputStream(
+                callback=self.audio_callback,
+                channels=1,
+                samplerate=self.sample_rate,
+                blocksize=self.step_size,
+                device=3 # change if needed, use sd.query_devices() to list
+            ):
+                print(f"[INFO] Starting audio stream. Recording at {self.sample_rate} Hz.")
+                print(f"[INFO] Buffer size: {self.asr_window_sec} seconds. Classifying every {self.classify_interval_sec} seconds.")
+                ani = FuncAnimation(self.fig, self.update_plot, interval=50, blit=False)
+                plt.tight_layout()
+                plt.show()
+        except Exception as e:
+            print(f"[ERROR] An error occurred during audio stream: {e}")
+            print("Please ensure your audio device is correctly selected (device=3) and available.")
+            print("You can list available devices using: python -m sounddevice")
+
 
 if __name__ == "__main__":
     emotion_model, target_sr = load_model_from_config("configs/inference_config.yml")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    
     realtime = RealTimeEmotionAndASR(emotion_model, target_sr, device=device)
+    
     realtime.run()

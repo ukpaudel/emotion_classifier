@@ -110,15 +110,15 @@ def apply_augmentations(waveform: torch.Tensor, sample_rate: int, noise_file_pat
         waveform = vol_transform(waveform)
 
     # # --- Pitch Shift ---
-    # if random.random() < 0.3: # 50% chance to apply pitch shift
-    #     try:
-    #         n_steps = random.uniform(-4, 4) # Shift pitch by -4 to +4 semitones
-    #         pitch_shifter = T.PitchShift(sample_rate, n_steps).to(device)
-    #         waveform = pitch_shifter(waveform)
-    #     except Exception as e:
-    #         # Handle cases where PitchShift might not be fully supported or cause issues
-    #         print(f"Warning: Could not apply PitchShift: {e}. Skipping.")
-    #         pass # Continue without this augmentation
+    if random.random() < 0.1: # 10% chance to apply pitch shift
+        try:
+            n_steps = random.uniform(-4, 4) # Shift pitch by -4 to +4 semitones
+            pitch_shifter = T.PitchShift(sample_rate, n_steps).to(device)
+            waveform = pitch_shifter(waveform)
+        except Exception as e:
+            # Handle cases where PitchShift might not be fully supported or cause issues
+            print(f"Warning: Could not apply PitchShift: {e}. Skipping.")
+            pass # Continue without this augmentation
 
     # --- Noise from MUSAN (Crackle/Microphone Noise) ---
     if noise_file_paths_map and any(noise_file_paths_map.values()) and random.random() < 0.3:
@@ -156,36 +156,35 @@ def apply_augmentations(waveform: torch.Tensor, sample_rate: int, noise_file_pat
     # --- 2. Apply Spectrogram-based augmentations (e.g., Time Stretch) in GPU ---
     # TimeStretch requires a complex-valued spectrogram input.
     # We'll convert to spectrogram, apply stretch, then convert back to waveform.
-    # if random.random() < 0.2: # 20% chance to apply time stretch
-    #     stretch_rate = random.uniform(0.8, 1.2) 
+    if random.random() < 0.05: # 5% chance to apply time stretch
+        stretch_rate = random.uniform(0.8, 1.2) 
+        n_fft = 1024
+        hop_length = n_fft // 4 
+        n_freq = n_fft // 2 + 1 # This calculates 1025 for n_fft=2048
+        
+        # Initialize Spectrogram WITHOUT return_complex=True (deprecated warning)
+        spectrogram_transform = T.Spectrogram(
+            n_fft=n_fft,
+            hop_length=hop_length,
+            power=None, 
+        ).to(device) 
+        
+        # Initialize TimeStretch with explicit n_freq and hop_length for robustness
+        # This is the main fix for the "size of tensor a (1025) must match b (201)" error
+        time_stretcher = T.TimeStretch(n_freq=n_freq, hop_length=hop_length).to(device) 
+        
+        inverse_spectrogram_transform = T.InverseSpectrogram(
+            n_fft=n_fft,
+            hop_length=hop_length
+        ).to(device) 
 
-    #     n_fft = 2048 
-    #     hop_length = n_fft // 4 
-    #     n_freq = n_fft // 2 + 1 # This calculates 1025 for n_fft=2048
-        
-    #     # Initialize Spectrogram WITHOUT return_complex=True (deprecated warning)
-    #     spectrogram_transform = T.Spectrogram(
-    #         n_fft=n_fft,
-    #         hop_length=hop_length,
-    #         power=None, 
-    #     ).to(device) 
-        
-    #     # Initialize TimeStretch with explicit n_freq and hop_length for robustness
-    #     # This is the main fix for the "size of tensor a (1025) must match b (201)" error
-    #     time_stretcher = T.TimeStretch(n_freq=n_freq, hop_length=hop_length).to(device) 
-        
-    #     inverse_spectrogram_transform = T.InverseSpectrogram(
-    #         n_fft=n_fft,
-    #         hop_length=hop_length
-    #     ).to(device) 
-
-    #     try:
-    #         complex_spectrogram = spectrogram_transform(waveform) # Input (waveform) is already on GPU
-    #         stretched_complex_spectrogram = time_stretcher(complex_spectrogram, stretch_rate)
-    #         waveform = inverse_spectrogram_transform(stretched_complex_spectrogram)
+        try:
+            complex_spectrogram = spectrogram_transform(waveform) # Input (waveform) is already on GPU
+            stretched_complex_spectrogram = time_stretcher(complex_spectrogram, stretch_rate)
+            waveform = inverse_spectrogram_transform(stretched_complex_spectrogram)
             
-    #     except Exception as e:
-    #         print(f"Warning: Error applying TimeStretch: {e}. Skipping.")
-    #         pass 
+        except Exception as e:
+            print(f"Warning: Error applying TimeStretch: {e}. Skipping.")
+            pass 
 
     return waveform # The augmented is now on the GPU
