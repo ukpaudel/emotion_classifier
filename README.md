@@ -137,7 +137,7 @@ To use this project, you need to download and correctly place the raw audio data
 
   * **CREMA-D:**
 
-      * (Add specific download instructions for CREMA-D here, similar to RAVDESS, if available.)
+      * **Download from:**  [CREMA-D Dataset](https://github.com/CheyneyComputerScience/CREMA-D/tree/master/AudioWAV) (or an equivalent source)
       * **Extraction Path:** Ensure the `data_dir` specified in your `config.yml` points to the correct location of its audio files.
 
   * **MUSAN (Noise):**
@@ -204,6 +204,7 @@ emotion_classifier/
 │
 ├── inference/
 │   └── realtime_inference_withASR.py
+│   └── inference.py
 │
 ├── run_experiment.py
 ├── setup.py
@@ -261,38 +262,56 @@ pip install -e .
 
 ```
 
-## \11. Usage
+## 11\. Usage
 
 ### Training
 
+```bash
+cd emotion_classifier
+python .\run_experiment.py
 ```
->cd emotion_classifier
->python .\run_experiment.py 
 
-This will read parameters from configs/config.yml, including:
-encoder type
-dataset path
-hyperparameters
-output directories
-resume or pretrained settings
+This command will execute the training process, reading parameters such as encoder type, dataset paths, hyperparameters, output directories, and resume/pretrained settings from `configs/config.yml`.
 
-```
+
 ### Visualize Comparisons Between Different Experiments
-To Visualize Tensboard Weights go to bash and run ```  > tensorboard --logdir=runs and open http://localhost:6006/ ```
 
-### Inference 
-For realtime
-To run go to the root folder ```cd emotion_classifier\emotion_classifier```  
-``` > python .\inference\realtime_inference_withASR.py```
+To visualize TensorBoard logs, navigate to your project root in the bash terminal and run:
 
-for single audio run the following. It uses preloaded files in the root directory.
-``` > python .\inference\inference.py```
+```bash
+tensorboard --logdir=runs
+```
+
+Then, open your web browser and go to `http://localhost:6006/`.
+
+### Inference
+
+For real-time emotion and ASR detection from a live microphone feed:
+Navigate to the project root:
+
+```bash
+cd emotion_classifier
+```
+
+Then run:
+
+```bash
+python .\inference\realtime_inference_withASR.py
+```
+
+**Note:** This real-time inference script processes audio in **5-second windows** for both ASR transcription and emotion classification. Emotion predictions are based on the primary emotion detected within this window, providing aggregated results every 5 seconds.
+
+For single audio file inference (uses preloaded example files in the root directory):
+
+```bash
+python .\inference\inference.py
+```
 
 ## \12. Results
 
 Comparison of Different Trainings (see ```runs/example_comparisons.png``` for details):
 
-- Achieved up to ~80% classification accuracy using the RAVDESS dataset alone (though there are concern about speaker independence in this dataset).
+- Achieved up to ~80% classification accuracy using the RAVDESS dataset alone (though there are concern about speaker independence in this dataset, i.e. it is learning features from the speaker+emotion).
 
 - Adding the CREMA-D dataset and addressing speaker independence reduced classification accuracy to around 67%.
 
@@ -304,46 +323,45 @@ Comparison of Different Trainings (see ```runs/example_comparisons.png``` for de
 
 ![confusion_animation](https://github.com/user-attachments/assets/4adf6350-f210-4f7b-bf4b-563de67e32de)
 
-- Realtime inference  has a mixed results. Even I have trouble classifying emotions from audio. Perhaps the idea of classifying emotion from a few second long audio is an unrealistic goals? Once could train to use much longer time window, 20-30 seconds to classify the overall tone of the conversation? 
+- Real-time inference has shown mixed results. Human classification of emotions from short audio segments can be inherently challenging. The current approach focuses on classifying emotion from a few-second-long audio window. Future work could explore using much longer time windows (e.g., 20-30 seconds) to classify the overall tone of a conversation for more contextual emotion analysis.
 
 
 With frozen encoder layers and only RAVDEV audio dataset. ![image](https://github.com/user-attachments/assets/a06e94a5-a9e8-4f12-ae0d-a7df148ec078)
 Example of Tensorboard: <img width="1000" alt="example_comparisons" src="https://github.com/user-attachments/assets/9764f031-abff-4670-a537-e574633b5f28" />
 
-Example of Inference: Both ASR text and emotions are labeled. I am not happy with the performance on the realtime audio despite the validation accuracy being high. Something ain't right...
+Example of Inference: Both ASR text and emotions are labeled. The performance on real-time audio is not yet satisfactory despite high validation accuracy, indicating a potential domain gap.
+
 ![image](https://github.com/user-attachments/assets/da4f1505-5996-4acc-bc7e-9d1218fd73a4)
 
-## \13. Limitations and Issues
-Problem State: Discrepancy Between Offline Evaluation and Real-time Inference
+## 13\. Limitations and Issues
 
-Observation:
+### Problem State: Discrepancy Between Offline Evaluation and Real-time Inference
+
+**Observation:**
 The current emotion classification model, trained on the RAVDESS and CREMA-D datasets with added MUSAN noise augmentation, achieves a decent classification accuracy of approximately 68% on its 8 emotion classes during offline validation. However, when the trained model is deployed for real-time inference on live audio streams, its performance degrades significantly, failing to accurately classify emotions.
 
-Hypothesized Causes for Performance Degradation:
+**Hypothesized Causes for Performance Degradation:**
 
 The core issue appears to stem from a domain mismatch between the controlled, augmented training data and the unpredictable nature of real-time audio. Several factors are believed to contribute to this discrepancy:
 
-Lack of Real-time Augmentation Coverage (Feature Robustness):
+**1. Lack of Real-time Augmentation Coverage (Feature Robustness):**
 
 While MUSAN noise is applied during training, other crucial augmentations like audio masking (Time Masking, Frequency Masking / SpecAugment) are not currently utilized. These techniques are vital for making the model robust to corrupted or incomplete audio segments. Without them, the model may struggle with real-world scenarios where parts of the signal might be obscured or missing.
 
 Furthermore, even the applied MUSAN noise might not fully capture the diversity and characteristics of real-world environmental noise encountered in live scenarios.
 
-Temporal Distribution Mismatch:
+**2. Temporal Distribution Mismatch:**
 
-Training data often consists of pre-segmented audio clips with relatively consistent durations. Real-time audio, however, features variable speech tempos, pauses, and overall duration, which may not be adequately represented in the training augmentations (e.g., lack of Time Stretch during training or insufficient variability in sample lengths). This can lead to a model that is overfit to specific temporal patterns of the training data.
+Training data often consists of pre-segmented audio clips with relatively consistent durations. Real-time audio, however, features variable speech tempos, pauses, and overall duration. While the model is now trained on 5-second windows, the original utterances within these windows might still have temporal characteristics (e.g., specific start/end times, internal silences) that are not fully represented by the training augmentations (e.g., insufficient variability in sample lengths or positioning within the fixed window). This can lead to a model that is overfit to specific temporal patterns of the original training data.
 
-Real-world Audio Imperfections and Variability:
+**3. Real-world Audio Imperfections and Variability:**
 
 Live audio inherently contains imperfections not fully present or accounted for in curated datasets:
 
-Unforeseen Noise Types: Background conversations, sudden loud noises, or specific ambient sounds that differ from the MUSAN categories.
-
-Microphone Variability: Differences in microphone quality, distance, and placement (e.g., built-in laptop mic vs. headset vs. external mic) can introduce spectral and amplitude distortions.
-
-Acoustic Environments: Variations in room acoustics, reverberation, and echoes in real-world settings that are absent in the anechoic or controlled recording conditions of the datasets.
-
-Non-standard Speech Characteristics: Subtle variations in speaking style, volume, or voice quality that fall outside the learned distribution of the training data.
+  * **Unforeseen Noise Types:** Background conversations, sudden loud noises, or specific ambient sounds that differ from the MUSAN categories.
+  * **Microphone Variability:** Differences in microphone quality, distance, and placement (e.g., built-in laptop mic vs. headset vs. external mic) can introduce spectral and amplitude distortions.
+  * **Acoustic Environments:** Variations in room acoustics, reverberation, and echoes in real-world settings that are absent in the anechoic or controlled recording conditions of the datasets.
+  * **Non-standard Speech Characteristics:** Subtle variations in speaking style, volume, or voice quality that fall outside the learned distribution of the training data.
 
 ## Author
 Uttam Paudel
