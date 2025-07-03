@@ -1,137 +1,145 @@
+
 # Emotion and ASR API
 
-This repository contains a FastAPI application that provides an API for emotion recognition and Automatic Speech Recognition (ASR) from audio inputs. The application leverages pre-trained models, specifically a HuBERT-based model for emotion classification and a Wav2Vec2 model for ASR.
+This repository contains a FastAPI-based API for **emotion recognition** and **automatic speech recognition (ASR)** from audio inputs. It uses pre-trained models: a HuBERT-based model for emotion classification and a Wav2Vec2 model for ASR.
 
-The project is designed to be run within a Docker container to ensure a consistent environment and leverage GPU acceleration.
+The project is designed to run in a Docker container for a consistent, GPU-accelerated environment.
+
+---
 
 ## Table of Contents
 
-1.  [Prerequisites](#1-prerequisites)
-2.  [Project Structure](#2-project-structure)
-3.  [Setup Instructions](#3-setup-instructions)
-    * [3.1. Clone the Repository](#31-clone-the-repository)
-    * [3.2. Docker Image Build](#32-docker-image-build)
-    * [3.3. Run the Docker Container](#33-run-the-docker-container)
-4.  [API Usage](#4-api-usage)
-5.  [Troubleshooting](#5-troubleshooting)
+- [Emotion and ASR API](#emotion-and-asr-api)
+  - [Table of Contents](#table-of-contents)
+  - [Prerequisites](#prerequisites)
+  - [Project Structure](#project-structure)
+  - [Setup Instructions](#setup-instructions)
+    - [3.1 Clone the Repository](#31-clone-the-repository)
+    - [3.2 Build the Docker Image](#32-build-the-docker-image)
+    - [3.3 Run the Docker Container](#33-run-the-docker-container)
+  - [API Usage](#api-usage)
+    - [1️⃣ Web Interface](#1️⃣-web-interface)
+    - [2️⃣ Swagger (Interactive API Docs)](#2️⃣-swagger-interactive-api-docs)
+    - [3️⃣ Programmatic (cURL)](#3️⃣-programmatic-curl)
+  - [Troubleshooting](#troubleshooting)
+  - [License](#license)
 
-## 1. Prerequisites
+---
 
-Before you begin, ensure you have the following installed on your system:
+## Prerequisites
 
-* **Git:** For cloning the repository.
-    * [Download Git](https://git-scm.com/downloads)
-* **Docker Desktop:** This includes Docker Engine and Docker Compose, essential for building and running Docker containers.
-    * [Download Docker Desktop](https://www.docker.com/products/docker-desktop/)
-* **NVIDIA GPU (Recommended):** A compatible NVIDIA GPU is highly recommended for accelerated inference.
-    * Ensure you have the correct NVIDIA drivers installed that are compatible with **CUDA 12.4**. You can check your CUDA version by running `nvidia-smi` in your terminal.
-    * **Note:** The Docker image uses PyTorch with CUDA 12.4.
+Before you begin, ensure the following are installed:
 
-## 2. Project Structure
+- **Git** (for cloning the repository): [Download Git](https://git-scm.com/downloads)
+- **Docker Desktop** (includes Docker Engine and Docker Compose): [Download Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- **NVIDIA GPU (recommended)** for accelerated inference.
 
-The core application code and Dockerfile are organized as follows (paths relative to the repository root):
+> **Note**:
+> - Ensure you have NVIDIA drivers compatible with **CUDA 12.4**.
+> - Verify your CUDA version with `nvidia-smi` in the terminal.
+> - The provided Docker image uses PyTorch with CUDA 12.4 support.
 
+---
+
+## Project Structure
+
+\`\`\`plaintext
 emotion_classifier/
-├── Dockerfile                  # Defines how to build the Docker image
-├── emotion_classifier/         # Your main application source folder
-│   └── deploy/                 # Contains the FastAPI app, models, config, and requirements
-│       ├── app.py              # FastAPI application entry point
-│       ├── models/             # Contains model-related classes
+├── Dockerfile                # Defines the Docker image build
+├── emotion_classifier/
+│   └── deploy/               # Application source
+│       ├── app.py            # FastAPI app entry point
+│       ├── models/           # Model-related classes
 │       │   ├── emotion_model.py
 │       │   └── attention_classifier.py
-│       ├── inference_config.yml# Configuration for model loading
-│       ├── hubert_2MLP_0Enc_noisedata_aug_cosinewrmst_D0p3_v2_file19.pt # Your pre-trained model weights
-│       ├── requirements.txt    # Python dependencies for the application
-│       ├── static/             # Static files for the web interface
-│       │   └── style.css
-│       └── templates/          # HTML templates for the web interface
-│           └── index.html
-└── README.md                   # This file
+│       ├── inference_config.yml
+│       ├── hubert_2MLP_0Enc_noisedata_aug_cosinewrmst_D0p3_v2_file19.pt  # Pre-trained weights
+│       ├── requirements.txt  # Python dependencies
+│       ├── static/
+│       │   └── style.css     # Web interface styling
+│       └── templates/
+│           └── index.html    # Web interface template
+└── README.md                 # This file
+\`\`\`
 
+---
 
-## 3. Setup Instructions
+## Setup Instructions
 
-Follow these steps to get the API running in a Docker container on your local machine.
+### 3.1 Clone the Repository
 
-### 3.1. Clone the Repository
-
-First, clone this Git repository to your local machine:
-
-```bash
-git clone [https://github.com/ukpaudel/emotion_classifier.git](https://github.com/ukpaudel/emotion_classifier.git) -b testbranch
+\`\`\`bash
+git clone https://github.com/ukpaudel/emotion_classifier.git -b testbranch
 cd emotion_classifier
-Note: The -b testbranch flag specifies that you're cloning the testbranch directly.
+\`\`\`
 
-3.2. Docker Image Build
-Navigate to the root directory of the cloned repository (the emotion_classifier folder where the Dockerfile is located). Then, build the Docker image. This process will download the necessary base image, copy your application code, and install all Python dependencies.
+> The `-b testbranch` flag checks out the specific branch directly.
 
-Important: This step can take a significant amount of time the first time you run it, as it needs to download large base images and install many Python packages. Subsequent builds will be faster due to Docker's caching.
+### 3.2 Build the Docker Image
 
-Bash
-
+\`\`\`bash
 docker build -t emotion-asr-api .
-docker build: The command to build a Docker image.
+\`\`\`
 
--t emotion-asr-api: Tags the image with the name emotion-asr-api.
+### 3.3 Run the Docker Container
 
-.: Specifies that the build context (the files Docker can access) is the current directory (the repository root).
-
-If the build completes successfully, you will see a message similar to Successfully built <image_id> and Successfully tagged emotion-asr-api:latest.
-
-3.3. Run the Docker Container
-Once the Docker image is built, you can run a container from it. This will start your FastAPI application.
-
-Bash
-
+\`\`\`bash
 docker run -p 8000:8000 --gpus all emotion-asr-api
-docker run: Creates and starts a new container from an image.
+\`\`\`
 
--p 8000:8000: Maps port 8000 on your host machine to port 8000 inside the container. This is how you'll access the API from your browser or other applications.
+---
 
---gpus all: Crucial for GPU acceleration. This flag tells Docker to provide access to all available NVIDIA GPUs on your host machine to the container. If you don't have an NVIDIA GPU or the drivers aren't set up, you might omit this flag (but inference will be much slower on CPU).
+## API Usage
 
-emotion-asr-api: The name of the Docker image you just built.
+### 1️⃣ Web Interface
 
-After running this command, you should see output from Uvicorn (FastAPI's server) in your terminal, indicating that the application has started and is listening on 0.0.0.0:8000.
+- Go to [http://localhost:8000](http://localhost:8000)
+- Upload a `.wav` file (3–4 seconds, recorded by a single speaker)
+- Click **Upload & Analyze** to receive transcription and emotion predictions
 
-4. API Usage
-Once the container is running:
+### 2️⃣ Swagger (Interactive API Docs)
 
-Open your web browser.
+- Go to [http://localhost:8000/docs](http://localhost:8000/docs)
+- Use the `POST /analyze` endpoint to upload audio and view JSON response
 
-Navigate to http://localhost:8000. This will load the main web interface for the application.
+### 3️⃣ Programmatic (cURL)
 
-On the web page, you should see an option to upload a short .wav audio file (a few seconds long). Select your audio file and submit it to receive emotion and ASR predictions.
+\`\`\`bash
+curl -X POST "http://localhost:8000/analyze" -F "file=@path/to/your/audio.wav"
+\`\`\`
 
-Alternatively, you can access the interactive API documentation (Swagger UI) by navigating to http://localhost:8000/docs. Here, you can manually test the API endpoints.
+Sample response:
 
-5. Troubleshooting
-FROM requires either one or three arguments: This error usually means there's an inline comment (#) on the same line as the FROM or COPY instruction in your Dockerfile. Ensure these lines are clean, e.g., FROM pytorch/pytorch:2.4.1-cuda12.4-cudnn9-runtime and COPY emotion_classifier/deploy/ /app/.
+\`\`\`json
+{
+  "transcription": "WE HAD A GREAT WEEKEND GOING TO LEGOLAND THIS WEEKEND",
+  "predicted_emotion": "Angry",
+  "emotion_scores": {
+    "Neutral": 0.02,
+    "Calm": 0.01,
+    "Happy": 0.01,
+    "Sad": 0.01,
+    "Angry": 0.92,
+    "Fearful": 0.01,
+    "Disgust": 0.01,
+    "Surprised": 0.01
+  }
+}
+\`\`\`
 
-"/emotion_classifier/deploy": not found: This means the COPY instruction in your Dockerfile can't find the source directory.
+---
 
-Ensure your Dockerfile is in the outermost emotion_classifier folder.
+## Troubleshooting
 
-Ensure the COPY line correctly spells out the path, e.g., COPY emotion_classifier/deploy/ /app/. The path is relative to the Dockerfile's location.
+- FROM/COPY line errors: remove inline comments from these lines
+- Directory not found errors: check COPY paths relative to Dockerfile
+- ModuleNotFoundError: check imports and `requirements.txt`, rebuild Docker image
+- TypeError/AttributeError with bundles: use proper attribute/method access, rebuild
+- Docker Daemon: ensure Docker Desktop is running
+- GPU issues: check drivers, CUDA version, and Docker GPU config
 
-ModuleNotFoundError or NameError for Wav2Vec2Processor, Wav2Vec2ForCTC, etc.:
+---
 
-Ensure these classes are correctly imported at the top of your app.py (e.g., from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC).
+## License
 
-Verify that sentencepiece is listed in your requirements.txt.
-
-After making changes to Python code (.py files) or requirements.txt, you must rebuild the Docker image (docker build -t emotion-asr-api .) and then re-run the container.
-
-TypeError: 'Wav2Vec2Bundle' object is not subscriptable or AttributeError: 'Wav2Vec2Bundle' object has no attribute 'feature_dim': This means you're trying to access parts of the torchaudio.pipelines.HUBERT_BASE (or similar bundle) incorrectly.
-
-Change encoder_bundle["model"] to encoder_bundle.get_model().
-
-Change encoder_bundle["sample_rate"] to encoder_bundle.sample_rate.
-
-Change encoder_bundle["feature_dim"] to self.encoder.feature_extractor.config.output_dim (assuming self.encoder is the model obtained via get_model()).
-
-Remember to rebuild and re-run after fixing these.
-
-Docker Daemon Not Running / Cannot Connect to Docker Daemon: Ensure Docker Desktop is running on your machine.
-
-CUDA/GPU Issues: If --gpus all doesn't work, ensure your NVIDIA drivers are up-to-date and compatible with CUDA 12.4, and that Docker Desktop is configured to use the WSL 2 backend (Windows) or has proper GPU passthrough set up (Linux). Check Docker Desktop settings for GPU.
+This project is licensed under your preferred license — *please add a LICENSE file if applicable.*
