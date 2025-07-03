@@ -101,6 +101,7 @@ docker run -p 8000:8000 --gpus all emotion-asr-api
 
 - Go to [http://localhost:8000/docs](http://localhost:8000/docs)
 - Use the `POST /analyze` endpoint to upload audio and view JSON response
+- ![image](https://github.com/user-attachments/assets/dc28f0c6-9404-42bf-92ff-c3be61982158)
 
 ### 3️⃣ Programmatic (cURL)
 
