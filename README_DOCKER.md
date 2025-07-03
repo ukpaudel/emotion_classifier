@@ -43,7 +43,7 @@ Before you begin, ensure the following are installed:
 
 ## Project Structure
 
-\`\`\`plaintext
+```plaintext
 emotion_classifier/
 ├── Dockerfile                # Defines the Docker image build
 ├── emotion_classifier/
@@ -60,7 +60,7 @@ emotion_classifier/
 │       └── templates/
 │           └── index.html    # Web interface template
 └── README.md                 # This file
-\`\`\`
+```
 
 ---
 
@@ -68,24 +68,24 @@ emotion_classifier/
 
 ### 3.1 Clone the Repository
 
-\`\`\`bash
+```bash
 git clone https://github.com/ukpaudel/emotion_classifier.git -b testbranch
 cd emotion_classifier
-\`\`\`
+```
 
 > The `-b testbranch` flag checks out the specific branch directly.
 
 ### 3.2 Build the Docker Image
 
-\`\`\`bash
+```bash
 docker build -t emotion-asr-api .
-\`\`\`
+```
 
 ### 3.3 Run the Docker Container
 
-\`\`\`bash
+```bash
 docker run -p 8000:8000 --gpus all emotion-asr-api
-\`\`\`
+```
 
 ---
 
@@ -104,13 +104,13 @@ docker run -p 8000:8000 --gpus all emotion-asr-api
 
 ### 3️⃣ Programmatic (cURL)
 
-\`\`\`bash
+```bash
 curl -X POST "http://localhost:8000/analyze" -F "file=@path/to/your/audio.wav"
-\`\`\`
+```
 
 Sample response:
 
-\`\`\`json
+```json
 {
   "transcription": "WE HAD A GREAT WEEKEND GOING TO LEGOLAND THIS WEEKEND",
   "predicted_emotion": "Angry",
@@ -125,7 +125,7 @@ Sample response:
     "Surprised": 0.01
   }
 }
-\`\`\`
+```
 
 ---
 
