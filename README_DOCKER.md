@@ -69,11 +69,11 @@ emotion_classifier/
 ### 3.1 Clone the Repository
 
 ```bash
-git clone https://github.com/ukpaudel/emotion_classifier_v2.git -b testbranch
+git clone https://github.com/ukpaudel/emotion_classifier.git -b main
 cd emotion_classifier
 ```
 
-> The `-b testbranch` flag checks out the specific branch directly.
+> The `-b main` flag checks out the specific branch directly.
 
 ### 3.2 Build the Docker Image
 
