@@ -69,7 +69,7 @@ emotion_classifier/
 ### 3.1 Clone the Repository
 
 ```bash
-git clone https://github.com/ukpaudel/emotion_classifier.git -b testbranch
+git clone https://github.com/ukpaudel/emotion_classifier_v2.git -b testbranch
 cd emotion_classifier
 ```
 
@@ -94,7 +94,7 @@ docker run -p 8000:8000 --gpus all emotion-asr-api
 ### 1️⃣ Web Interface
 
 - Go to [http://localhost:8000](http://localhost:8000)
-- Upload a `.wav` file (3–4 seconds, recorded by a single speaker)
+- Upload a `.wav` file (3–4 seconds, recorded by a single speaker). See `emotion_classifer\test_data` directory for example `.wav` that are recorded locally and weren't part of the training
 - Click **Upload & Analyze** to receive transcription and emotion predictions
 
 ### 2️⃣ Swagger (Interactive API Docs)
