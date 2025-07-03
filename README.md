@@ -157,7 +157,7 @@ To use this project, you need to download and correctly place the raw audio data
         └── ...
         ```
 
-## \8. Folder Structure
+## 8\. Folder Structure
 
 ```text
 emotion_classifier/
@@ -179,6 +179,16 @@ emotion_classifier/
 ├── models/
 │   ├── attention_classifier.py
 │   └── emotion_model.py
+|
+├── deploy/
+│   ├── models
+|       └── attention_classifier.py
+|       └── emotion_model.py
+│   ├── static
+│   ├── app.py
+│   ├── hubert_2MLP_0Enc_noisedata_aug_cosinewrmst_D0p3_v2_file19.pt
+│   ├── requirements.txt
+│   └── inference_config.yml
 │
 ├── runs/
 │   ├── emotion_classifier_v#/
@@ -209,11 +219,12 @@ emotion_classifier/
 ├── run_experiment.py
 ├── setup.py
 ├── README.md
+├── Dockerfile
 └── ...
 ```
 
 
-## \9. Architecture
+## 9\. Architecture
 ```
                ┌───────────────────────────────┐
                │         Waveform Input        │
@@ -253,7 +264,7 @@ emotion_classifier/
 
 
 ```
-## \10. ⚙️ Installation
+## 10. ⚙️ Installation
 
 ```bash
 git clone https://github.com/ukpaudel/emotion_classifier.git
@@ -262,7 +273,7 @@ pip install -e .
 
 ```
 
-## 11\. Usage
+## 11. Usage
 
 ### Training
 
@@ -307,7 +318,31 @@ For single audio file inference (uses preloaded example files in the root direct
 python .\inference\inference.py
 ```
 
-## \12. Results
+## 🚀 Docker API Deployment ready! (don't need to install the full package)
+
+
+This Docker image provides a speech-to-text and emotion classification API powered by FastAPI.
+
+## Installation
+
+Pull the Docker image from GitHub Container Registry (GHCR):
+
+    ```docker pull ghcr.io/ukpaudel/emotion-asr-api:latest```
+
+## Running the Container
+
+Start the API container with:
+
+    ```docker run -it --rm -p 8000:8000 ghcr.io/ukpaudel/emotion-asr-api:latest```
+
+Then access the API docs at:
+
+```http://localhost:8000/docs```
+
+for the interactive Swagger UI.
+
+
+## 12. Results
 
 Comparison of Different Trainings (see ```runs/example_comparisons.png``` for details):
 
