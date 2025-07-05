@@ -154,7 +154,7 @@ def train_model(model, train_loader, val_loader, config, run_name, resume_traini
                 continue # Skip to the next iteration of the loop
             # --- END OF CHECK ---
 
-            waveforms, labels, lengths = batch_data 
+            waveforms, labels, lengths, dataset_ids = batch_data 
             # Move data to the correct device (GPU if available)
             waveforms = waveforms.to(device)
             labels = labels.to(device)
@@ -193,8 +193,8 @@ def train_model(model, train_loader, val_loader, config, run_name, resume_traini
         all_labels = []
 
         with torch.no_grad():
-            for waveforms, labels, lengths in val_loader:
-                waveforms, labels, lengths = waveforms.to(device), labels.to(device), lengths.to(device)
+            for waveforms, labels, lengths, dataset_ids in val_loader:
+                waveforms, labels, lengths, dataset_ids = waveforms.to(device), labels.to(device), lengths.to(device), dataset_ids.to(device)
                 outputs = model(waveforms, lengths)
                 _, predicted = torch.max(outputs, 1)
 

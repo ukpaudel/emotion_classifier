@@ -6,7 +6,7 @@ data:
     - class_path: data.cremad_dataset.CREMADataset
       data_dir: 'data/CREMA-D/data'
   sample_rate: 16000
-  noise_dir: 'data/musan_noise' #directory with noise to add to the training waverform.
+  noise_dir: 'data/musan' #directory with noise to add to the training waverform.
 
 model:
   encoder_name: "hubert" #wav2vec2
@@ -14,27 +14,27 @@ model:
   hidden_dim: 256
   num_classes: 8
   freeze_encoder: true #if false, all layer are unfroozen. If true, they are all frozen, the next line will set the layers to be unfreezed.
-  unfreeze_last_n_layers: 3
+  unfreeze_last_n_layers: null
 
 training:
   batch_size: 4
-  epochs: 100
+  epochs: 50
   lr: 0.0001
   max_lr: 0.003
   min_lr: 0.00001
   scheduler: "cosine_warm_restarts" #cosine_warm_restarts, onecycle, cosine
   resume_training: false #this will load weights, schedular from checkpoint_path and rerun it.
   val_split: 0.2
-  num_workers: 0 #cores-7, cpu cores to use, leave some cores for the os and other processes
+  num_workers: 4 #cores-7, cpu cores to use, leave some cores for the os and other processes
 
 pretrained_weights: #if enabled, it starts the training using weights from the pretrained weights, specify the weight file
-  enabled: true
+  enabled: false
   checkpoint_path: "runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3/checkpoint.pt"
   #runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3/checkpoint.pt is the most robust traning
 
 logging:
-  log_dir: "runs/emotion_classifier_v18/" #this is a unique folder for the training. when it reruns it overrides and deletes the log file so update it as needed.
-  run_label: "hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3_v2" #unique id give to the training. 
+  log_dir: "runs/emotion_classifier_exp2/" #this is a unique folder for the training. when it reruns it overrides and deletes the log file so update it as needed.
+  run_label: "hubert_2MLP_0Enc_wnoisedata_cosinewrmst_D0p3" #unique id give to the training. 
   track_run: true #track different models trained so that we can plot them together.
   runs_config_path: "configs/model_runs.yml" #where to store info about different experimentation
   misclassified_dir: "misclassified/"

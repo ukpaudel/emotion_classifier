@@ -265,13 +265,75 @@ emotion_classifier/
 
 ```
 ## 10. ⚙️ Installation
+Prerequisites
 
-```bash
+Before you begin, ensure you have the following installed on your system:
+
+    Conda (Anaconda or Miniconda): Conda is essential for managing the project's Python environment and dependencies, especially for PyTorch with CUDA.
+
+        If you don't have it, download and install Miniconda from the official website: https://docs.conda.io/en/latest/miniconda.html
+
+    CUDA-compatible GPU (NVIDIA): If you plan to utilize GPU acceleration for training or inference, you will need an NVIDIA GPU with its corresponding drivers installed. Conda will handle installing the necessary CUDA runtime libraries for PyTorch, so you typically do not need to install the full CUDA Toolkit separately from NVIDIA.
+
+Installation
+
+Follow these steps to set up your development environment.
+
+1. Clone the Repository
+
+Open your terminal or Anaconda Prompt and clone the project:
+Bash
+
 git clone https://github.com/ukpaudel/emotion_classifier.git
 cd emotion_classifier
-pip install -e .
 
-```
+2. Create the Conda Environment
+
+Navigate to the emotion_classifier directory (where environment.yml and requirements_pip.txt are located). Use the provided environment.yml file to create a new Conda environment. This step will install Python 3.11, PyTorch (with CUDA 12.1), TorchVision, TorchAudio, and FFmpeg.
+Bash
+
+conda env create -f environment.yml
+
+This command might take some time as it downloads and installs all specified packages and their dependencies.
+
+3. Activate the Conda Environment
+
+Once the environment is created, activate it. You will need to activate this environment every time you work on the project.
+Bash
+
+conda activate emotion_classifier_env
+
+Your terminal prompt should change to (emotion_classifier_env) indicating that the environment is active.
+
+4. Verify Core Installations (Optional but Recommended)
+
+You can quickly check if PyTorch is correctly installed and if CUDA is available (if you have a compatible GPU):
+Bash
+
+python -c "import torch; print(f'PyTorch version: {torch.__version__}'); print(f'CUDA available: {torch.cuda.is_available()}'); print(f'CUDA version: {torch.version.cuda}')"
+
+Expected output for a GPU setup should be similar to:
+
+PyTorch version: 2.5.1
+CUDA available: True
+CUDA version: 12.1
+
+5. Install Remaining Python Packages
+
+Now, use pip to install the rest of the Python packages listed in requirements_pip.txt. This includes your project installed in "editable" mode (-e .), which means any changes you make to the source code will be reflected without reinstallation.
+Bash
+
+pip install -r requirements_pip.txt
+
+6. Verify Project Installation
+
+To confirm that your emotion_classifier package is correctly linked in editable mode, you can use:
+Bash
+
+pip list | grep emotion-classifier
+
+You should see an entry similar to:
+emotion-classifier    0.1.0     <editable>
 
 ## 11. Usage
 

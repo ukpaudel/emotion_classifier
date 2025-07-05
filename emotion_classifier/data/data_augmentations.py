@@ -104,13 +104,13 @@ def apply_augmentations(waveform: torch.Tensor, sample_rate: int, noise_file_pat
 # --- 1. Apply waveform-based augmentations ---
 
     # --- Gain (Volume) ---
-    if random.random() < 0.2: # 50% chance to apply gain
+    if random.random() < 0.5: # 50% chance to apply gain
         gain_db = random.uniform(-6, 6) # Random gain between -6dB and +6dB
         vol_transform = T.Vol(gain=gain_db, gain_type="db").to(device)
         waveform = vol_transform(waveform)
 
     # # --- Pitch Shift ---
-    if random.random() < 0.1: # 10% chance to apply pitch shift
+    if random.random() < 0.0: # 10% chance to apply pitch shift
         try:
             n_steps = random.uniform(-4, 4) # Shift pitch by -4 to +4 semitones
             pitch_shifter = T.PitchShift(sample_rate, n_steps).to(device)
@@ -156,7 +156,7 @@ def apply_augmentations(waveform: torch.Tensor, sample_rate: int, noise_file_pat
     # --- 2. Apply Spectrogram-based augmentations (e.g., Time Stretch) in GPU ---
     # TimeStretch requires a complex-valued spectrogram input.
     # We'll convert to spectrogram, apply stretch, then convert back to waveform.
-    if random.random() < 0.05: # 5% chance to apply time stretch
+    if random.random() < 0.3: # 5% chance to apply time stretch
         stretch_rate = random.uniform(0.8, 1.2) 
         n_fft = 1024
         hop_length = n_fft // 4 
@@ -182,6 +182,7 @@ def apply_augmentations(waveform: torch.Tensor, sample_rate: int, noise_file_pat
             complex_spectrogram = spectrogram_transform(waveform) # Input (waveform) is already on GPU
             stretched_complex_spectrogram = time_stretcher(complex_spectrogram, stretch_rate)
             waveform = inverse_spectrogram_transform(stretched_complex_spectrogram)
+            #print('Waveform time stretched')
             
         except Exception as e:
             print(f"Warning: Error applying TimeStretch: {e}. Skipping.")
