@@ -1,0 +1,242 @@
+2025-06-26 12:45:13,170 - INFO - Logger initialized for run: Wav2Vec2_unfreeze_last_layer_HD256_Dropout0.3 at 2025-06-26T12:45:13.170586
+2025-06-26 12:45:13,170 - INFO - ===== Running Experiment =====
+2025-06-26 12:45:13,172 - INFO - ===== Successfully loaded model  wav2vec2 =====
+2025-06-26 12:45:14,361 - WARNING - [Warning] Encoder 'wav2vec2' does not expose transformer layers. Cannot unfreeze selectively.
+2025-06-26 12:45:14,377 - INFO - Initialized EmotionModel with encoder='wav2vec2' | Feature dim: 768 | Classes: 8
+2025-06-26 12:45:14,645 - INFO - Logger initialized for run: Wav2Vec2_unfreeze_last_layer_HD256_Dropout0.3 at 2025-06-26T12:45:14.645951
+2025-06-26 12:45:15,930 - INFO - [INFO] Starting fresh training
+2025-06-26 12:45:33,039 - INFO - Epoch 1/100 | Train Loss: 2.0519 | Train Acc: 15.71%
+2025-06-26 12:45:41,878 - INFO - Validation Acc: 23.61%
+2025-06-26 12:45:42,279 - INFO - Checkpoint saved at epoch 0 to runs/emotion_classifier_v2\Wav2Vec2_unfreeze_last_layer_HD256_Dropout0.3\checkpoint.pt
+2025-06-26 12:45:42,279 - INFO - New best model saved.
+2025-06-26 12:45:58,015 - INFO - Epoch 2/100 | Train Loss: 1.9760 | Train Acc: 24.05%
+2025-06-26 12:46:06,853 - INFO - Validation Acc: 23.96%
+2025-06-26 12:46:07,226 - INFO - Checkpoint saved at epoch 1 to runs/emotion_classifier_v2\Wav2Vec2_unfreeze_last_layer_HD256_Dropout0.3\checkpoint.pt
+2025-06-26 12:46:07,226 - INFO - New best model saved.
+2025-06-26 12:46:22,975 - INFO - Epoch 3/100 | Train Loss: 1.8132 | Train Acc: 29.95%
+2025-06-26 12:46:31,840 - INFO - Validation Acc: 33.33%
+2025-06-26 12:46:32,220 - INFO - Checkpoint saved at epoch 2 to runs/emotion_classifier_v2\Wav2Vec2_unfreeze_last_layer_HD256_Dropout0.3\checkpoint.pt
+2025-06-26 12:46:32,220 - INFO - New best model saved.
+2025-06-26 12:46:47,992 - INFO - Epoch 4/100 | Train Loss: 1.6619 | Train Acc: 35.50%
+2025-06-26 12:46:56,834 - INFO - Validation Acc: 39.24%
+2025-06-26 12:46:57,215 - INFO - Checkpoint saved at epoch 3 to runs/emotion_classifier_v2\Wav2Vec2_unfreeze_last_layer_HD256_Dropout0.3\checkpoint.pt
+2025-06-26 12:46:57,215 - INFO - New best model saved.
+2025-06-26 12:47:13,033 - INFO - Epoch 5/100 | Train Loss: 1.5168 | Train Acc: 43.75%
+2025-06-26 12:47:21,845 - INFO - Validation Acc: 44.79%
+2025-06-26 12:47:22,226 - INFO - Checkpoint saved at epoch 4 to runs/emotion_classifier_v2\Wav2Vec2_unfreeze_last_layer_HD256_Dropout0.3\checkpoint.pt
+2025-06-26 12:47:22,226 - INFO - New best model saved.
+2025-06-26 12:47:38,048 - INFO - Epoch 6/100 | Train Loss: 1.4551 | Train Acc: 44.79%
+2025-06-26 12:47:46,854 - INFO - Validation Acc: 49.31%
+2025-06-26 12:47:47,237 - INFO - Checkpoint saved at epoch 5 to runs/emotion_classifier_v2\Wav2Vec2_unfreeze_last_layer_HD256_Dropout0.3\checkpoint.pt
+2025-06-26 12:47:47,239 - INFO - New best model saved.
+2025-06-26 12:48:03,214 - INFO - Epoch 7/100 | Train Loss: 1.3767 | Train Acc: 47.48%
+2025-06-26 12:48:12,217 - INFO - Validation Acc: 50.35%
+2025-06-26 12:48:12,591 - INFO - Checkpoint saved at epoch 6 to runs/emotion_classifier_v2\Wav2Vec2_unfreeze_last_layer_HD256_Dropout0.3\checkpoint.pt
+2025-06-26 12:48:12,591 - INFO - New best model saved.
+2025-06-26 12:48:28,634 - INFO - Epoch 8/100 | Train Loss: 1.3765 | Train Acc: 48.61%
+2025-06-26 12:48:37,609 - INFO - Validation Acc: 44.10%
+2025-06-26 12:48:53,620 - INFO - Epoch 9/100 | Train Loss: 1.3539 | Train Acc: 51.04%
+2025-06-26 12:49:02,845 - INFO - Validation Acc: 57.99%
+2025-06-26 12:49:03,252 - INFO - Checkpoint saved at epoch 8 to runs/emotion_classifier_v2\Wav2Vec2_unfreeze_last_layer_HD256_Dropout0.3\checkpoint.pt
+2025-06-26 12:49:03,252 - INFO - New best model saved.
+2025-06-26 12:49:20,528 - INFO - Epoch 10/100 | Train Loss: 1.2842 | Train Acc: 51.22%
+2025-06-26 12:49:29,849 - INFO - Validation Acc: 56.94%
+2025-06-26 12:49:45,827 - INFO - Epoch 11/100 | Train Loss: 1.2371 | Train Acc: 53.91%
+2025-06-26 12:49:54,772 - INFO - Validation Acc: 60.76%
+2025-06-26 12:49:55,174 - INFO - Checkpoint saved at epoch 10 to runs/emotion_classifier_v2\Wav2Vec2_unfreeze_last_layer_HD256_Dropout0.3\checkpoint.pt
+2025-06-26 12:49:55,174 - INFO - New best model saved.
+2025-06-26 12:50:11,017 - INFO - Epoch 12/100 | Train Loss: 1.2164 | Train Acc: 55.21%
+2025-06-26 12:50:20,004 - INFO - Validation Acc: 59.38%
+2025-06-26 12:50:35,978 - INFO - Epoch 13/100 | Train Loss: 1.1881 | Train Acc: 54.86%
+2025-06-26 12:50:44,997 - INFO - Validation Acc: 57.99%
+2025-06-26 12:51:00,981 - INFO - Epoch 14/100 | Train Loss: 1.1761 | Train Acc: 57.03%
+2025-06-26 12:51:09,949 - INFO - Validation Acc: 53.12%
+2025-06-26 12:51:26,240 - INFO - Epoch 15/100 | Train Loss: 1.1322 | Train Acc: 56.60%
+2025-06-26 12:51:35,207 - INFO - Validation Acc: 55.56%
+2025-06-26 12:51:51,156 - INFO - Epoch 16/100 | Train Loss: 1.1567 | Train Acc: 57.12%
+2025-06-26 12:51:59,959 - INFO - Validation Acc: 56.25%
+2025-06-26 12:52:15,858 - INFO - Epoch 17/100 | Train Loss: 1.1134 | Train Acc: 59.64%
+2025-06-26 12:52:24,979 - INFO - Validation Acc: 63.54%
+2025-06-26 12:52:25,373 - INFO - Checkpoint saved at epoch 16 to runs/emotion_classifier_v2\Wav2Vec2_unfreeze_last_layer_HD256_Dropout0.3\checkpoint.pt
+2025-06-26 12:52:25,373 - INFO - New best model saved.
+2025-06-26 12:52:41,933 - INFO - Epoch 18/100 | Train Loss: 1.0953 | Train Acc: 59.55%
+2025-06-26 12:52:50,728 - INFO - Validation Acc: 63.89%
+2025-06-26 12:52:51,190 - INFO - Checkpoint saved at epoch 17 to runs/emotion_classifier_v2\Wav2Vec2_unfreeze_last_layer_HD256_Dropout0.3\checkpoint.pt
+2025-06-26 12:52:51,190 - INFO - New best model saved.
+2025-06-26 12:53:07,144 - INFO - Epoch 19/100 | Train Loss: 1.0399 | Train Acc: 63.89%
+2025-06-26 12:53:15,938 - INFO - Validation Acc: 61.81%
+2025-06-26 12:53:31,714 - INFO - Epoch 20/100 | Train Loss: 1.0519 | Train Acc: 60.07%
+2025-06-26 12:53:40,526 - INFO - Validation Acc: 64.24%
+2025-06-26 12:53:40,901 - INFO - Checkpoint saved at epoch 19 to runs/emotion_classifier_v2\Wav2Vec2_unfreeze_last_layer_HD256_Dropout0.3\checkpoint.pt
+2025-06-26 12:53:40,901 - INFO - New best model saved.
+2025-06-26 12:53:56,750 - INFO - Epoch 21/100 | Train Loss: 1.0516 | Train Acc: 61.63%
+2025-06-26 12:54:05,693 - INFO - Validation Acc: 58.68%
+2025-06-26 12:54:21,491 - INFO - Epoch 22/100 | Train Loss: 1.0942 | Train Acc: 60.42%
+2025-06-26 12:54:30,302 - INFO - Validation Acc: 67.01%
+2025-06-26 12:54:30,695 - INFO - Checkpoint saved at epoch 21 to runs/emotion_classifier_v2\Wav2Vec2_unfreeze_last_layer_HD256_Dropout0.3\checkpoint.pt
+2025-06-26 12:54:30,695 - INFO - New best model saved.
+2025-06-26 12:54:46,497 - INFO - Epoch 23/100 | Train Loss: 1.0084 | Train Acc: 62.76%
+2025-06-26 12:54:55,305 - INFO - Validation Acc: 52.08%
+2025-06-26 12:55:11,270 - INFO - Epoch 24/100 | Train Loss: 1.0125 | Train Acc: 62.85%
+2025-06-26 12:55:20,102 - INFO - Validation Acc: 64.58%
+2025-06-26 12:55:35,844 - INFO - Epoch 25/100 | Train Loss: 1.0116 | Train Acc: 63.45%
+2025-06-26 12:55:44,685 - INFO - Validation Acc: 61.81%
+2025-06-26 12:56:00,465 - INFO - Epoch 26/100 | Train Loss: 1.0508 | Train Acc: 61.02%
+2025-06-26 12:56:09,277 - INFO - Validation Acc: 65.28%
+2025-06-26 12:56:25,053 - INFO - Epoch 27/100 | Train Loss: 0.9521 | Train Acc: 63.98%
+2025-06-26 12:56:33,866 - INFO - Validation Acc: 65.28%
+2025-06-26 12:56:49,636 - INFO - Epoch 28/100 | Train Loss: 0.9774 | Train Acc: 62.85%
+2025-06-26 12:56:58,469 - INFO - Validation Acc: 63.89%
+2025-06-26 12:57:14,503 - INFO - Epoch 29/100 | Train Loss: 0.9770 | Train Acc: 62.41%
+2025-06-26 12:57:24,153 - INFO - Validation Acc: 63.54%
+2025-06-26 12:57:40,265 - INFO - Epoch 30/100 | Train Loss: 0.9369 | Train Acc: 66.23%
+2025-06-26 12:57:49,493 - INFO - Validation Acc: 60.76%
+2025-06-26 12:58:05,913 - INFO - Epoch 31/100 | Train Loss: 0.9493 | Train Acc: 63.63%
+2025-06-26 12:58:14,867 - INFO - Validation Acc: 63.54%
+2025-06-26 12:58:31,139 - INFO - Epoch 32/100 | Train Loss: 0.9501 | Train Acc: 63.11%
+2025-06-26 12:58:40,335 - INFO - Validation Acc: 61.46%
+2025-06-26 12:58:56,640 - INFO - Epoch 33/100 | Train Loss: 0.9702 | Train Acc: 63.63%
+2025-06-26 12:59:05,481 - INFO - Validation Acc: 62.50%
+2025-06-26 12:59:21,422 - INFO - Epoch 34/100 | Train Loss: 0.9194 | Train Acc: 64.06%
+2025-06-26 12:59:30,639 - INFO - Validation Acc: 68.75%
+2025-06-26 12:59:30,991 - INFO - Checkpoint saved at epoch 33 to runs/emotion_classifier_v2\Wav2Vec2_unfreeze_last_layer_HD256_Dropout0.3\checkpoint.pt
+2025-06-26 12:59:30,991 - INFO - New best model saved.
+2025-06-26 12:59:48,829 - INFO - Epoch 35/100 | Train Loss: 0.9076 | Train Acc: 66.41%
+2025-06-26 13:00:00,230 - INFO - Validation Acc: 61.81%
+2025-06-26 13:00:17,169 - INFO - Epoch 36/100 | Train Loss: 0.9017 | Train Acc: 65.54%
+2025-06-26 13:00:26,215 - INFO - Validation Acc: 64.24%
+2025-06-26 13:00:42,735 - INFO - Epoch 37/100 | Train Loss: 0.8870 | Train Acc: 67.53%
+2025-06-26 13:00:52,037 - INFO - Validation Acc: 64.58%
+2025-06-26 13:01:08,256 - INFO - Epoch 38/100 | Train Loss: 0.9272 | Train Acc: 65.80%
+2025-06-26 13:01:17,443 - INFO - Validation Acc: 65.28%
+2025-06-26 13:01:33,664 - INFO - Epoch 39/100 | Train Loss: 0.8925 | Train Acc: 65.19%
+2025-06-26 13:01:42,818 - INFO - Validation Acc: 67.01%
+2025-06-26 13:01:58,729 - INFO - Epoch 40/100 | Train Loss: 0.8476 | Train Acc: 68.66%
+2025-06-26 13:02:08,017 - INFO - Validation Acc: 62.85%
+2025-06-26 13:02:24,225 - INFO - Epoch 41/100 | Train Loss: 0.8328 | Train Acc: 67.62%
+2025-06-26 13:02:33,410 - INFO - Validation Acc: 68.75%
+2025-06-26 13:02:49,672 - INFO - Epoch 42/100 | Train Loss: 0.8236 | Train Acc: 69.97%
+2025-06-26 13:02:58,809 - INFO - Validation Acc: 67.36%
+2025-06-26 13:03:15,041 - INFO - Epoch 43/100 | Train Loss: 0.8548 | Train Acc: 69.27%
+2025-06-26 13:03:24,173 - INFO - Validation Acc: 66.32%
+2025-06-26 13:03:41,144 - INFO - Epoch 44/100 | Train Loss: 0.8211 | Train Acc: 69.01%
+2025-06-26 13:03:50,860 - INFO - Validation Acc: 65.28%
+2025-06-26 13:04:07,558 - INFO - Epoch 45/100 | Train Loss: 0.8535 | Train Acc: 67.80%
+2025-06-26 13:04:17,225 - INFO - Validation Acc: 70.83%
+2025-06-26 13:04:17,631 - INFO - Checkpoint saved at epoch 44 to runs/emotion_classifier_v2\Wav2Vec2_unfreeze_last_layer_HD256_Dropout0.3\checkpoint.pt
+2025-06-26 13:04:17,631 - INFO - New best model saved.
+2025-06-26 13:04:34,516 - INFO - Epoch 46/100 | Train Loss: 0.8114 | Train Acc: 69.01%
+2025-06-26 13:04:44,194 - INFO - Validation Acc: 65.97%
+2025-06-26 13:05:01,196 - INFO - Epoch 47/100 | Train Loss: 0.7975 | Train Acc: 69.88%
+2025-06-26 13:05:10,790 - INFO - Validation Acc: 65.62%
+2025-06-26 13:05:27,267 - INFO - Epoch 48/100 | Train Loss: 0.7442 | Train Acc: 72.14%
+2025-06-26 13:05:36,757 - INFO - Validation Acc: 69.44%
+2025-06-26 13:05:53,249 - INFO - Epoch 49/100 | Train Loss: 0.7793 | Train Acc: 71.61%
+2025-06-26 13:06:03,194 - INFO - Validation Acc: 66.67%
+2025-06-26 13:06:19,557 - INFO - Epoch 50/100 | Train Loss: 0.6979 | Train Acc: 72.74%
+2025-06-26 13:06:28,981 - INFO - Validation Acc: 64.58%
+2025-06-26 13:06:45,451 - INFO - Epoch 51/100 | Train Loss: 0.7917 | Train Acc: 69.27%
+2025-06-26 13:06:55,174 - INFO - Validation Acc: 66.32%
+2025-06-26 13:07:11,767 - INFO - Epoch 52/100 | Train Loss: 0.7435 | Train Acc: 71.09%
+2025-06-26 13:07:21,599 - INFO - Validation Acc: 68.75%
+2025-06-26 13:07:38,243 - INFO - Epoch 53/100 | Train Loss: 0.7536 | Train Acc: 71.61%
+2025-06-26 13:07:47,753 - INFO - Validation Acc: 65.97%
+2025-06-26 13:08:04,619 - INFO - Epoch 54/100 | Train Loss: 0.7683 | Train Acc: 72.92%
+2025-06-26 13:08:14,165 - INFO - Validation Acc: 69.44%
+2025-06-26 13:08:30,606 - INFO - Epoch 55/100 | Train Loss: 0.7335 | Train Acc: 72.92%
+2025-06-26 13:08:40,313 - INFO - Validation Acc: 70.83%
+2025-06-26 13:08:56,854 - INFO - Epoch 56/100 | Train Loss: 0.7483 | Train Acc: 70.83%
+2025-06-26 13:09:06,776 - INFO - Validation Acc: 68.40%
+2025-06-26 13:09:23,398 - INFO - Epoch 57/100 | Train Loss: 0.6935 | Train Acc: 73.35%
+2025-06-26 13:09:32,917 - INFO - Validation Acc: 66.67%
+2025-06-26 13:09:49,610 - INFO - Epoch 58/100 | Train Loss: 0.7213 | Train Acc: 73.18%
+2025-06-26 13:09:59,328 - INFO - Validation Acc: 67.01%
+2025-06-26 13:10:15,989 - INFO - Epoch 59/100 | Train Loss: 0.6526 | Train Acc: 75.69%
+2025-06-26 13:10:25,712 - INFO - Validation Acc: 70.14%
+2025-06-26 13:10:42,356 - INFO - Epoch 60/100 | Train Loss: 0.7032 | Train Acc: 75.26%
+2025-06-26 13:10:51,903 - INFO - Validation Acc: 68.40%
+2025-06-26 13:11:08,544 - INFO - Epoch 61/100 | Train Loss: 0.6692 | Train Acc: 74.22%
+2025-06-26 13:11:18,106 - INFO - Validation Acc: 66.67%
+2025-06-26 13:11:34,759 - INFO - Epoch 62/100 | Train Loss: 0.6718 | Train Acc: 75.52%
+2025-06-26 13:11:44,285 - INFO - Validation Acc: 70.49%
+2025-06-26 13:12:00,916 - INFO - Epoch 63/100 | Train Loss: 0.6322 | Train Acc: 76.04%
+2025-06-26 13:12:10,489 - INFO - Validation Acc: 67.36%
+2025-06-26 13:12:27,148 - INFO - Epoch 64/100 | Train Loss: 0.6865 | Train Acc: 74.57%
+2025-06-26 13:12:36,681 - INFO - Validation Acc: 70.49%
+2025-06-26 13:12:53,388 - INFO - Epoch 65/100 | Train Loss: 0.7135 | Train Acc: 74.22%
+2025-06-26 13:13:03,088 - INFO - Validation Acc: 70.83%
+2025-06-26 13:13:19,706 - INFO - Epoch 66/100 | Train Loss: 0.6361 | Train Acc: 77.34%
+2025-06-26 13:13:29,262 - INFO - Validation Acc: 67.71%
+2025-06-26 13:13:45,940 - INFO - Epoch 67/100 | Train Loss: 0.6660 | Train Acc: 72.66%
+2025-06-26 13:13:55,654 - INFO - Validation Acc: 70.83%
+2025-06-26 13:14:12,514 - INFO - Epoch 68/100 | Train Loss: 0.6788 | Train Acc: 75.43%
+2025-06-26 13:14:22,022 - INFO - Validation Acc: 70.49%
+2025-06-26 13:14:38,671 - INFO - Epoch 69/100 | Train Loss: 0.6349 | Train Acc: 75.87%
+2025-06-26 13:14:48,396 - INFO - Validation Acc: 71.18%
+2025-06-26 13:14:48,841 - INFO - Checkpoint saved at epoch 68 to runs/emotion_classifier_v2\Wav2Vec2_unfreeze_last_layer_HD256_Dropout0.3\checkpoint.pt
+2025-06-26 13:14:48,842 - INFO - New best model saved.
+2025-06-26 13:15:05,488 - INFO - Epoch 70/100 | Train Loss: 0.6729 | Train Acc: 76.65%
+2025-06-26 13:15:15,028 - INFO - Validation Acc: 71.18%
+2025-06-26 13:15:31,689 - INFO - Epoch 71/100 | Train Loss: 0.6273 | Train Acc: 76.91%
+2025-06-26 13:15:41,215 - INFO - Validation Acc: 73.26%
+2025-06-26 13:15:41,632 - INFO - Checkpoint saved at epoch 70 to runs/emotion_classifier_v2\Wav2Vec2_unfreeze_last_layer_HD256_Dropout0.3\checkpoint.pt
+2025-06-26 13:15:41,633 - INFO - New best model saved.
+2025-06-26 13:15:58,293 - INFO - Epoch 72/100 | Train Loss: 0.6226 | Train Acc: 76.56%
+2025-06-26 13:16:07,982 - INFO - Validation Acc: 71.88%
+2025-06-26 13:16:24,630 - INFO - Epoch 73/100 | Train Loss: 0.6245 | Train Acc: 76.74%
+2025-06-26 13:16:34,382 - INFO - Validation Acc: 71.88%
+2025-06-26 13:16:51,026 - INFO - Epoch 74/100 | Train Loss: 0.6076 | Train Acc: 76.39%
+2025-06-26 13:17:00,568 - INFO - Validation Acc: 70.49%
+2025-06-26 13:17:17,245 - INFO - Epoch 75/100 | Train Loss: 0.5935 | Train Acc: 78.39%
+2025-06-26 13:17:26,775 - INFO - Validation Acc: 71.88%
+2025-06-26 13:17:43,418 - INFO - Epoch 76/100 | Train Loss: 0.5971 | Train Acc: 75.78%
+2025-06-26 13:17:52,961 - INFO - Validation Acc: 71.18%
+2025-06-26 13:18:09,592 - INFO - Epoch 77/100 | Train Loss: 0.6250 | Train Acc: 77.95%
+2025-06-26 13:18:19,242 - INFO - Validation Acc: 71.18%
+2025-06-26 13:18:35,992 - INFO - Epoch 78/100 | Train Loss: 0.5841 | Train Acc: 79.08%
+2025-06-26 13:18:45,536 - INFO - Validation Acc: 73.26%
+2025-06-26 13:19:02,156 - INFO - Epoch 79/100 | Train Loss: 0.5876 | Train Acc: 77.60%
+2025-06-26 13:19:11,738 - INFO - Validation Acc: 73.26%
+2025-06-26 13:19:28,392 - INFO - Epoch 80/100 | Train Loss: 0.6124 | Train Acc: 78.12%
+2025-06-26 13:19:38,425 - INFO - Validation Acc: 72.92%
+2025-06-26 13:19:55,488 - INFO - Epoch 81/100 | Train Loss: 0.5468 | Train Acc: 82.20%
+2025-06-26 13:20:04,406 - INFO - Validation Acc: 73.26%
+2025-06-26 13:20:20,535 - INFO - Epoch 82/100 | Train Loss: 0.6024 | Train Acc: 78.04%
+2025-06-26 13:20:29,679 - INFO - Validation Acc: 71.88%
+2025-06-26 13:20:46,266 - INFO - Epoch 83/100 | Train Loss: 0.5785 | Train Acc: 78.04%
+2025-06-26 13:20:55,458 - INFO - Validation Acc: 72.22%
+2025-06-26 13:21:11,890 - INFO - Epoch 84/100 | Train Loss: 0.5693 | Train Acc: 79.95%
+2025-06-26 13:21:21,284 - INFO - Validation Acc: 71.88%
+2025-06-26 13:21:37,456 - INFO - Epoch 85/100 | Train Loss: 0.5649 | Train Acc: 78.82%
+2025-06-26 13:21:46,594 - INFO - Validation Acc: 73.26%
+2025-06-26 13:22:02,859 - INFO - Epoch 86/100 | Train Loss: 0.5796 | Train Acc: 78.99%
+2025-06-26 13:22:12,005 - INFO - Validation Acc: 71.53%
+2025-06-26 13:22:28,315 - INFO - Epoch 87/100 | Train Loss: 0.5587 | Train Acc: 80.03%
+2025-06-26 13:22:38,156 - INFO - Validation Acc: 72.22%
+2025-06-26 13:22:54,869 - INFO - Epoch 88/100 | Train Loss: 0.5535 | Train Acc: 79.25%
+2025-06-26 13:23:04,119 - INFO - Validation Acc: 72.57%
+2025-06-26 13:23:20,663 - INFO - Epoch 89/100 | Train Loss: 0.5850 | Train Acc: 79.86%
+2025-06-26 13:23:29,991 - INFO - Validation Acc: 72.92%
+2025-06-26 13:23:46,255 - INFO - Epoch 90/100 | Train Loss: 0.5922 | Train Acc: 78.91%
+2025-06-26 13:23:55,620 - INFO - Validation Acc: 72.22%
+2025-06-26 13:24:12,261 - INFO - Epoch 91/100 | Train Loss: 0.5032 | Train Acc: 82.20%
+2025-06-26 13:24:21,903 - INFO - Validation Acc: 72.57%
+2025-06-26 13:24:38,396 - INFO - Epoch 92/100 | Train Loss: 0.5645 | Train Acc: 78.65%
+2025-06-26 13:24:47,910 - INFO - Validation Acc: 73.26%
+2025-06-26 13:25:04,470 - INFO - Epoch 93/100 | Train Loss: 0.5710 | Train Acc: 79.69%
+2025-06-26 13:25:13,944 - INFO - Validation Acc: 72.92%
+2025-06-26 13:25:30,134 - INFO - Epoch 94/100 | Train Loss: 0.5703 | Train Acc: 79.25%
+2025-06-26 13:25:39,098 - INFO - Validation Acc: 72.22%
+2025-06-26 13:25:55,186 - INFO - Epoch 95/100 | Train Loss: 0.5528 | Train Acc: 80.03%
+2025-06-26 13:26:04,360 - INFO - Validation Acc: 72.57%
+2025-06-26 13:26:20,728 - INFO - Epoch 96/100 | Train Loss: 0.5636 | Train Acc: 78.21%
+2025-06-26 13:26:29,709 - INFO - Validation Acc: 72.22%
+2025-06-26 13:26:45,718 - INFO - Epoch 97/100 | Train Loss: 0.5735 | Train Acc: 79.95%
+2025-06-26 13:26:54,688 - INFO - Validation Acc: 72.22%
+2025-06-26 13:27:10,709 - INFO - Epoch 98/100 | Train Loss: 0.5527 | Train Acc: 80.21%
+2025-06-26 13:27:20,292 - INFO - Validation Acc: 72.22%
+2025-06-26 13:27:36,393 - INFO - Epoch 99/100 | Train Loss: 0.5690 | Train Acc: 79.34%
+2025-06-26 13:27:45,699 - INFO - Validation Acc: 72.22%
+2025-06-26 13:28:01,687 - INFO - Epoch 100/100 | Train Loss: 0.5407 | Train Acc: 80.30%
+2025-06-26 13:28:11,018 - INFO - Validation Acc: 72.22%
+2025-06-26 13:28:11,018 - INFO - Training complete.

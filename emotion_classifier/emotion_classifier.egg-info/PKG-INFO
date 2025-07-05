@@ -1,0 +1,18 @@
+Metadata-Version: 2.4
+Name: emotion_classifier
+Version: 0.1.0
+Summary: Emotion classification pipeline with SSL models and attention pooling
+Author: Uttam Paudel
+Requires-Python: >=3.8
+Requires-Dist: torch>=2.0
+Requires-Dist: torchaudio>=2.0
+Requires-Dist: PyYAML>=5.4
+Requires-Dist: tensorboard
+Requires-Dist: matplotlib
+Requires-Dist: scikit-learn
+Requires-Dist: soundfile
+Requires-Dist: transformers
+Dynamic: author
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary

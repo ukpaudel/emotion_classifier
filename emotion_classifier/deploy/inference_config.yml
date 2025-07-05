@@ -1,0 +1,11 @@
+model:
+  class_path: models.emotion_model.EmotionModel # This path is for the imported class in app.py
+  args:
+    encoder_name: "hubert"
+    dropout: 0.3
+    hidden_dim: 256
+    num_classes: 8
+    freeze_encoder: true
+    unfreeze_last_n_layers: null # explicitly set to null/None
+  checkpoint_path: "./hubert_2MLP_0Enc_noisedata_aug_cosinewrmst_D0p3_v2_file19.pt" #MODEL SAVED
+  sample_rate: 16000 # Target sample rate for your model

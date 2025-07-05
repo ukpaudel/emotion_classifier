@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Emotion & ASR Inference | HuBERT + Classifier</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 700px; margin: auto; padding: 2rem; }
+        h1 { color: #3f51b5; }
+        .output { margin-top: 2rem; }
+        .probs { font-family: monospace; background: #f5f5f5; padding: 1rem; border-radius: 5px; margin-top: 1rem; }
+        .spinner {
+            font-weight: bold;
+            color: #555;
+            animation: pulse 1s infinite alternate;
+        }
+        @keyframes pulse {
+            from { opacity: 0.4; }
+            to   { opacity: 1; }
+        }
+        .error-banner {
+            background-color: #ffe0e0;
+            color: #b00020;
+            padding: 10px;
+            border: 1px solid #b00020;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        audio {
+            margin-top: 1rem;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎧 Upload Audio for Emotion + Transcription</h1>
+    <div style="margin-bottom: 1rem; font-size: 0.95rem; color: #444;">
+        <em>Project by <strong>Uttam Paudel · Last updated July 1st 2025</strong></em><br><br>
+        Powered by <strong>HuBERT Base + Attention Classifier</strong><br>
+        Fine-tuned end-to-end for emotion recognition & ASR 🎧<br><br>
+        Upload a short (3–4 sec) .wav file recorded by a single speaker. The model will transcribe and predict the emotion.
+    </div>
+
+    <form id="uploadForm">
+        <input type="file" name="audio" accept=".wav" required />
+        <br/>
+        <button type="submit">Upload & Analyze</button>
+    </form>
+
+    <audio id="audioPlayer" controls style="display:none;"></audio>
+    <div class="output" id="result"></div>
+    <canvas id="emotionChart" width="400" height="200" style="margin-top: 2rem;"></canvas>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const resultDiv = document.getElementById('result');
+        const audioPlayer = document.getElementById('audioPlayer');
+        let chartRef = null;
+
+        const emotionLabels = ["Neutral", "Calm", "Happy", "Sad", "Angry", "Fearful", "Disgust", "Surprised"];
+        const emotionDescriptions = {
+            Neutral: "Flat or unremarkable tone",
+            Calm: "Relaxed and composed voice",
+            Happy: "Cheerful, upbeat mood",
+            Sad: "Low-energy or downcast",
+            Angry: "Tense or forceful tone",
+            Fearful: "Nervous or uncertain",
+            Disgust: "Dismissive or annoyed",
+            Surprised: "Excited or startled"
+        };
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            resultDiv.innerHTML = '<div class="spinner">⏳ Processing...</div>';
+            audioPlayer.style.display = "none";
+
+            const file = form.querySelector('input[name="audio"]').files[0];
+            if (file) {
+                const blobUrl = URL.createObjectURL(file);
+                audioPlayer.src = blobUrl;
+                audioPlayer.style.display = "block";
+            }
+
+            if (chartRef) {
+                chartRef.destroy();
+                chartRef = null;
+            }
+
+            try {
+                const res = await fetch('/inference', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    throw new Error(`Server error (${res.status}): ${errorText}`);
+                }
+
+                const data = await res.json();
+                console.log("📦 Raw API response:", data);
+
+                if (!data.emotion_probs || !Array.isArray(data.emotion_probs)) {
+                    throw new Error("Malformed API response: emotion_probs missing or invalid.");
+                }
+
+                resultDiv.innerHTML = `
+                    <p><strong>🗣️ Transcription:</strong> ${data.text}</p>
+                    <p><strong>😄 Predicted Emotion:</strong> ${data.emotion}</p>
+                `;
+
+                // Draw chart
+                const ctx = document.getElementById('emotionChart').getContext('2d');
+                chartRef = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: emotionLabels,
+                        datasets: [{
+                            label: 'Emotion Probabilities',
+                            data: data.emotion_probs,
+                            backgroundColor: emotionLabels.map(label =>
+                                label.toLowerCase() === data.emotion.toLowerCase()
+                                    ? 'rgba(63, 81, 181, 0.7)'
+                                    : 'rgba(200, 200, 200, 0.6)'
+                            ),
+                            borderColor: 'rgba(0,0,0,0.1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label;
+                                        const desc = emotionDescriptions[label] || "No description";
+                                        const prob = context.parsed.y.toFixed(3);
+                                        return `${label}: ${desc} — ${prob}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 1
+                            }
+                        }
+                    }
+                });
+
+            } catch (err) {
+                console.error("❌ Frontend Error:", err);
+                resultDiv.innerHTML = `<div class="error-banner">❌ ${err.message}</div>`;
+            }
+        });
+    </script>
+</body>
+</html>

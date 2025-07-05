@@ -1,0 +1,11 @@
+model:
+  class_path: emotion_classifier.models.emotion_model.EmotionModel
+  checkpoint_path: runs\emotion_classifier_v18\hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+  sample_rate: 16_000
+  args:
+    encoder_name: hubert
+    dropout: 0.3
+    hidden_dim: 256
+    num_classes: 8
+    freeze_encoder: true
+    unfreeze_last_n_layers: 3
