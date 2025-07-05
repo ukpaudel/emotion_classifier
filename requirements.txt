@@ -1,1 +1,97 @@
-# Placeholder for requirements.txt
+absl-py==2.3.1
+asttokens @ file:///home/conda/feedstock_root/build_artifacts/asttokens_1733250440834/work
+Brotli @ file:///croot/brotli-split_1736182456865/work
+brotlicffi @ file:///croot/brotlicffi_1736182461069/work
+certifi @ file:///croot/certifi_1750863846190/work/certifi
+cffi @ file:///croot/cffi_1736182485317/work
+charset-normalizer @ file:///croot/charset-normalizer_1721748349566/work
+comm @ file:///home/conda/feedstock_root/build_artifacts/comm_1733502965406/work
+contourpy @ file:///croot/contourpy_1732540045555/work
+cycler @ file:///tmp/build/80754af9/cycler_1637851556182/work
+debugpy @ file:///home/conda/feedstock_root/build_artifacts/debugpy_1744321233760/work
+decorator @ file:///home/conda/feedstock_root/build_artifacts/decorator_1740384970518/work
+-e git+https://github.com/ukpaudel/emotion_classifier.git@3f7cf8875d2bba2590477775e96986d4cdfebebf#egg=emotion_classifier&subdirectory=emotion_classifier
+exceptiongroup @ file:///home/conda/feedstock_root/build_artifacts/exceptiongroup_1746947292760/work
+executing @ file:///home/conda/feedstock_root/build_artifacts/executing_1745502089858/work
+filelock @ file:///croot/filelock_1744281381737/work
+fonttools @ file:///croot/fonttools_1737039080035/work
+fsspec==2025.5.1
+gmpy2 @ file:///croot/gmpy2_1738085463648/work
+grpcio==1.73.1
+hf-xet==1.1.5
+huggingface-hub==0.33.2
+idna @ file:///croot/idna_1714398848350/work
+imageio==2.37.0
+importlib_metadata @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_importlib-metadata_1747934053/work
+ipykernel @ file:///home/conda/feedstock_root/build_artifacts/ipykernel_1719845459717/work
+ipython @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_ipython_1751465044/work
+ipython_pygments_lexers @ file:///home/conda/feedstock_root/build_artifacts/ipython_pygments_lexers_1737123620466/work
+jedi @ file:///home/conda/feedstock_root/build_artifacts/jedi_1733300866624/work
+Jinja2 @ file:///croot/jinja2_1741710844255/work
+joblib==1.5.1
+jupyter_client @ file:///home/conda/feedstock_root/build_artifacts/jupyter_client_1733440914442/work
+jupyter_core @ file:///home/conda/feedstock_root/build_artifacts/jupyter_core_1748333051527/work
+kiwisolver @ file:///croot/kiwisolver_1737039087198/work
+Markdown==3.8.2
+MarkupSafe @ file:///croot/markupsafe_1738584038848/work
+matplotlib==3.10.0
+matplotlib-inline @ file:///home/conda/feedstock_root/build_artifacts/matplotlib-inline_1733416936468/work
+mkl-service==2.4.0
+mkl_fft @ file:///io/mkl313/mkl_fft_1730824109137/work
+mkl_random @ file:///io/mkl313/mkl_random_1730823916628/work
+mpmath @ file:///croot/mpmath_1690848262763/work
+nest_asyncio @ file:///home/conda/feedstock_root/build_artifacts/nest-asyncio_1733325553580/work
+networkx @ file:///croot/networkx_1737039604450/work
+numpy @ file:///croot/numpy_and_numpy_base_1725470312869/work/dist/numpy-2.0.1-cp311-cp311-linux_x86_64.whl#sha256=372b9067cf9c96d8662c6f20ef49eeda43f0f8d2f074820224c954d8d8fae7bc
+packaging @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_packaging_1745345660/work
+pandas==2.3.0
+parso @ file:///home/conda/feedstock_root/build_artifacts/parso_1733271261340/work
+pexpect @ file:///home/conda/feedstock_root/build_artifacts/pexpect_1733301927746/work
+pickleshare @ file:///home/conda/feedstock_root/build_artifacts/pickleshare_1733327343728/work
+pillow @ file:///croot/pillow_1744613067434/work
+platformdirs @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_platformdirs_1746710438/work
+prompt_toolkit @ file:///home/conda/feedstock_root/build_artifacts/prompt-toolkit_1744724089886/work
+protobuf==6.31.1
+psutil @ file:///home/conda/feedstock_root/build_artifacts/psutil_1740663149797/work
+ptyprocess @ file:///home/conda/feedstock_root/build_artifacts/ptyprocess_1733302279685/work/dist/ptyprocess-0.7.0-py2.py3-none-any.whl#sha256=92c32ff62b5fd8cf325bec5ab90d7be3d2a8ca8c8a3813ff487a8d2002630d1f
+pure_eval @ file:///home/conda/feedstock_root/build_artifacts/pure_eval_1733569405015/work
+pycparser @ file:///tmp/build/80754af9/pycparser_1636541352034/work
+Pygments @ file:///home/conda/feedstock_root/build_artifacts/pygments_1750615794071/work
+pyparsing @ file:///croot/pyparsing_1731445506121/work
+PyQt6==6.7.1
+PyQt6_sip @ file:///croot/pyqt-split_1744804475988/work/pyqt_sip
+PySocks @ file:///work/ci_py311/pysocks_1676822712504/work
+python-dateutil @ file:///croot/python-dateutil_1716495738603/work
+pytz==2025.2
+PyYAML @ file:///croot/pyyaml_1728657952215/work
+pyzmq @ file:///home/conda/feedstock_root/build_artifacts/pyzmq_1724399095153/work
+regex==2024.11.6
+requests @ file:///croot/requests_1750426329888/work
+safetensors==0.5.3
+scikit-learn==1.7.0
+scipy==1.16.0
+seaborn==0.13.2
+sip @ file:///croot/sip_1738856193618/work
+six @ file:///croot/six_1744271502820/work
+soundfile==0.13.1
+stack_data @ file:///home/conda/feedstock_root/build_artifacts/stack_data_1733569443808/work
+sympy==1.13.1
+tensorboard==2.19.0
+tensorboard-data-server==0.7.2
+threadpoolctl==3.6.0
+tokenizers==0.21.2
+torch==2.5.1
+torchaudio==2.5.1
+torchvision==0.20.1
+tornado @ file:///croot/tornado_1748956929273/work
+tqdm==4.67.1
+traitlets @ file:///home/conda/feedstock_root/build_artifacts/traitlets_1733367359838/work
+transformers==4.53.1
+triton==3.1.0
+typing_extensions @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_typing_extensions_1751643513/work
+tzdata==2025.2
+unicodedata2 @ file:///croot/unicodedata2_1736541023050/work
+urllib3 @ file:///croot/urllib3_1750775463400/work
+wcwidth @ file:///home/conda/feedstock_root/build_artifacts/wcwidth_1733231326287/work
+Werkzeug==3.1.3
+zipp @ file:///home/conda/feedstock_root/build_artifacts/zipp_1749421620841/work
