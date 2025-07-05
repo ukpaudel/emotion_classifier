@@ -13,7 +13,7 @@ def collate_fn(batch):
     if len(batch) == 0:
         return None
 
-    waveforms, labels = zip(*batch)
+    waveforms, labels, dataset_ids = zip(*batch)
     #convert to 1D flatten mono channel, if needed
     waveforms = [w.squeeze(0) for w in waveforms]
     #find max length of the time from the batch
@@ -30,4 +30,4 @@ def collate_fn(batch):
 
     # NOTE: Don't try to use this mask on the encoder output!
     # Just return the original waveform lengths.
-    return batch_waveforms, batch_labels, torch.tensor(lengths)
+    return batch_waveforms, batch_labels, torch.tensor(lengths), dataset_ids

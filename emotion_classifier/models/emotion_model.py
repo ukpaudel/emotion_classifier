@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 from models.attention_classifier import AttentionClassifier
 from utils.encoder_loader import load_ssl_encoder
+from utils.feature_store import feature_store #for mutable dictionary that both EmotionModel and run_experiments will see
+
 
 '''
 EmotionModel is a modular audio classification model designed to wrap a frozen or partially trainable
@@ -14,7 +16,7 @@ Features:
 '''
 
 class EmotionModel(nn.Module):
-    def __init__(self, encoder_name="wav2vec2", dropout=0.3, hidden_dim=256, num_classes=8,
+    def __init__(self, encoder_name="hubert", dropout=0.3, hidden_dim=256, num_classes=8,
                  freeze_encoder=True, unfreeze_last_n_layers=None, logger=None):
         super().__init__()
         self.encoder_name = encoder_name
@@ -82,6 +84,11 @@ class EmotionModel(nn.Module):
         with torch.no_grad():
             features, _ = self.encoder.extract_features(x)
             features = features[-1].detach()  # shape [B, T_out, F]
+
+            # add this line to store pooled encoder features
+            pooled = features.mean(dim=1)  # mean over frames
+            for i in range(pooled.shape[0]):
+                feature_store["encoder"].append(pooled[i].cpu())
 
         B, T_out, _ = features.shape
         T_in = waveforms.shape[-1]

@@ -1,3 +1,7 @@
 runs:
 - label: hubert_2MLP_0Enc_noisedata_cosinewrmst_D0p3
   log_dir: runs/emotion_classifier_1/
+- label: hubert_2MLP_0Enc_nonoisedata_cosinewrmst_D0p3
+  log_dir: runs/emotion_classifier_exp1/
+- label: hubert_2MLP_0Enc_wnoisedata_cosinewrmst_D0p3
+  log_dir: runs/emotion_classifier_exp2/

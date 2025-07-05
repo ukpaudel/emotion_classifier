@@ -111,5 +111,4 @@ def create_dataloaders(config):
         num_workers=num_workers
     )
 
-    print('TEST TEST TEST TEST', len(train_loader), len(val_loader))
     return train_loader, val_loader
