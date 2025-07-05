@@ -6,7 +6,7 @@ data:
     - class_path: data.cremad_dataset.CREMADataset
       data_dir: 'data/CREMA-D/data'
   sample_rate: 16000
-  noise_dir: 'data/musan_noise' #directory with noise to add to the training waverform.
+  noise_dir: 'data/musan' #directory with noise to add to the training waverform.
 
 model:
   encoder_name: "hubert" #wav2vec2
@@ -18,7 +18,7 @@ model:
 
 training:
   batch_size: 32
-  epochs: 100
+  epochs: 20
   lr: 0.0001
   max_lr: 0.003
   min_lr: 0.00001

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-from emotion_classifier.models.attention_classifier import AttentionClassifier
-from emotion_classifier.utils.encoder_loader import load_ssl_encoder
+from models.attention_classifier import AttentionClassifier
+from utils.encoder_loader import load_ssl_encoder
 
 '''
 EmotionModel is a modular audio classification model designed to wrap a frozen or partially trainable

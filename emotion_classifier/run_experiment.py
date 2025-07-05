@@ -2,15 +2,15 @@ import os
 import yaml
 import torch
 import logging
-from emotion_classifier.utils.confusion_animation import animate_confusion, plot_final_confusion
-from emotion_classifier.utils.config import load_config
-from emotion_classifier.utils.logger import setup_logger
-from emotion_classifier.utils.run_tracker import update_model_runs_yaml
-from emotion_classifier.train.trainer import train_model
-from emotion_classifier.utils.tensorboard_plot_utils import plot_from_tensorboard
-from emotion_classifier.data.dataloader import create_dataloaders
-from emotion_classifier.models.emotion_model import EmotionModel
-from emotion_classifier.utils.encoder_loader import load_ssl_encoder
+from utils.confusion_animation import animate_confusion, plot_final_confusion
+from utils.config import load_config
+from utils.logger import setup_logger
+from utils.run_tracker import update_model_runs_yaml
+from train.trainer import train_model
+from utils.tensorboard_plot_utils import plot_from_tensorboard
+from data.dataloader import create_dataloaders
+from models.emotion_model import EmotionModel
+from utils.encoder_loader import load_ssl_encoder
 
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
