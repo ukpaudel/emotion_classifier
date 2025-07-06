@@ -3,7 +3,9 @@ import torch.nn as nn
 from models.attention_classifier import AttentionClassifier
 from utils.encoder_loader import load_ssl_encoder
 from utils.feature_store import feature_store #for mutable dictionary that both EmotionModel and run_experiments will see
-
+from models.attention_classifier import AttentionClassifier
+from models.domain_classifier import DomainClassifier
+from models.grl import grad_reverse
 
 '''
 EmotionModel is a modular audio classification model designed to wrap a frozen or partially trainable
@@ -17,10 +19,14 @@ Features:
 
 class EmotionModel(nn.Module):
     def __init__(self, encoder_name="hubert", dropout=0.3, hidden_dim=256, num_classes=8,
-                 freeze_encoder=True, unfreeze_last_n_layers=None, logger=None):
+                 freeze_encoder=True, unfreeze_last_n_layers=None,  num_domains=2,
+                 grl_lambda=1.0, logger=None):
         super().__init__()
         self.encoder_name = encoder_name
         self.num_classes = num_classes
+        self.num_domains = num_domains
+        self.grl_lambda = grl_lambda
+
         # Load encoder bundle components and validate API
         print("Inside EmotionModel")
         encoder_bundle = load_ssl_encoder(self.encoder_name)
@@ -71,8 +77,15 @@ class EmotionModel(nn.Module):
             dropout=dropout
         )
 
+        # new domain classifier
+        self.domain_classifier = DomainClassifier(
+            input_dim=self.feature_dim,
+            hidden_dim=hidden_dim // 2,
+            num_domains=num_domains,
+            dropout=dropout
+        )
         if logger:
-            logger.info(f"Initialized EmotionModel with encoder='{self.encoder_name}' | Feature dim: {self.feature_dim} | Classes: {self.num_classes}")
+            logger.info(f"Initialized EmotionModel with domain-adversarial head (domains={num_domains})")
 
     def forward(self, waveforms, lengths):
         """
@@ -97,6 +110,11 @@ class EmotionModel(nn.Module):
         mask = torch.zeros(B, T_out, dtype=torch.bool, device=features.device)
         for i, l in enumerate(downsampled_lengths):
             mask[i, :l] = 1
+            
+        logits_emotion = self.classifier(features, mask)
 
-        logits = self.classifier(features, mask)
-        return logits
+        # Domain classifier with GRL
+        grl_features = grad_reverse(pooled, lambda_=self.grl_lambda)
+        logits_domain = self.domain_classifier(grl_features)
+
+        return logits_emotion, logits_domain

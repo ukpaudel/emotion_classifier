@@ -16,6 +16,7 @@ from utils.model_utils import save_checkpoint, load_checkpoint, save_misclassifi
 from utils.run_tracker import update_model_runs_yaml
 from sklearn.metrics import confusion_matrix
 from utils.emotion_labels import EMOTION_MAP
+from utils.domain_to_idx import DOMAIN_TO_IDX
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE" #this is a patch I hade to make to plot as I have dll conflicts. 
 """
@@ -133,7 +134,7 @@ def train_model(model, train_loader, val_loader, config, run_name, resume_traini
         total_loss = 0.0
         correct = 0
         total = 0
-
+        alpha = config['model']['grl_lambda']
         # Using tqdm for a nice progress bar
         # Ensure that 'total' is correct if you have multiple datasets concatenated
         # The total length of the loader is based on the number of batches
@@ -156,24 +157,37 @@ def train_model(model, train_loader, val_loader, config, run_name, resume_traini
             # Move data to the correct device (GPU if available)
             waveforms = waveforms.to(device)
             labels = labels.to(device)
-
+            # dataset_ids is a list of strings
+            domain_labels = torch.tensor(
+                [DOMAIN_TO_IDX[name] for name in dataset_ids],
+                dtype=torch.long,
+                device=device
+            )
             # Forward pass
-            outputs = model(waveforms, lengths)
-            loss = criterion(outputs, labels)
+            emotion_logits, domain_logits = model(waveforms, lengths)
+            
+            emotion_loss = criterion(emotion_logits, labels)
+            domain_loss = criterion(domain_logits, domain_labels)
+            loss_both_classifier = emotion_loss + alpha * domain_loss
 
             optimizer.zero_grad()
 
             #backward pass and optimize
-            loss.backward()
+            loss_both_classifier.backward()
             optimizer.step()
-            scheduler.step()
+            if scheduler:
+                scheduler.step()
 
-            total_loss += loss.item()
-            _, predicted = torch.max(outputs, 1)
+            total_loss += loss_both_classifier.item()
+            _, predicted = torch.max(emotion_logits, 1)
             correct += (predicted == labels).sum().item()
             total += labels.size(0)
 
-            pbar.set_postfix(loss=total_loss / (i + 1))
+            pbar.set_postfix(
+            total_loss=total_loss / (i + 1),
+            emotion_loss=emotion_loss.item(),
+            domain_loss=domain_loss.item()
+            )
             
         train_acc = 100 * correct / total
         avg_loss = total_loss / len(train_loader)
@@ -187,20 +201,31 @@ def train_model(model, train_loader, val_loader, config, run_name, resume_traini
         # === VALIDATION ===
         model.eval()
         val_correct, val_total = 0, 0
+        domain_correct, domain_total = 0, 0
+
         all_preds = []
         all_labels = []
 
         with torch.no_grad():
             for waveforms, labels, lengths, dataset_ids in val_loader:
-                waveforms, labels, lengths, dataset_ids = waveforms.to(device), labels.to(device), lengths.to(device), dataset_ids.to(device)
-                outputs = model(waveforms, lengths)
-                _, predicted = torch.max(outputs, 1)
+                # dataset_ids is a list of strings
+                domain_labels = torch.tensor(
+                    [DOMAIN_TO_IDX[name] for name in dataset_ids],
+                    dtype=torch.long,
+                    device=device
+                )
+                waveforms, labels, lengths = waveforms.to(device), labels.to(device), lengths.to(device)
+                emotion_logits, domain_logits= model(waveforms, lengths)
+                _, predicted_emotion= torch.max(emotion_logits, 1)
+                _, predicted_domain = torch.max(domain_logits, 1)
 
-                val_correct += (predicted == labels).sum().item()
+                val_correct += (predicted_emotion == labels).sum().item()
                 val_total += labels.size(0)
+                domain_correct += (predicted_domain == domain_labels).sum().item()
+                domain_total += domain_labels.size(0)
 
                 # accumulate for confusion
-                all_preds.extend(predicted.cpu().numpy())
+                all_preds.extend(predicted_emotion.cpu().numpy())
                 all_labels.extend(labels.cpu().numpy())
 
                 # Optional: save misclassified examples at the end of the epoch
@@ -237,7 +262,13 @@ def train_model(model, train_loader, val_loader, config, run_name, resume_traini
         val_acc = 100 * val_correct / val_total
         writer.add_scalar("Accuracy/Val", val_acc, epoch)
 
+        domain_val_acc = 100 * domain_correct / domain_total
+        writer.add_scalar("Accuracy/Val_Domain", domain_val_acc, epoch)
+
+
         logger.info(f"Validation Acc: {val_acc:.2f}%")
+        logger.info(f"Domain Val Acc: {domain_val_acc:.2f}%")
+
 
         if val_acc > best_val_acc:
             best_val_acc = val_acc

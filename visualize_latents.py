@@ -30,6 +30,8 @@ def visualize_from_checkpoint(config_path="configs/config.yml", checkpoint_path=
         num_classes=config.get("model", "num_classes"),
         freeze_encoder=config.get("model", "freeze_encoder"),
         unfreeze_last_n_layers=config.get("model", "unfreeze_last_n_layers", default=None),
+        num_domains=config.get("model", "num_domains"),  # you can parameterize this in config if you wish
+        grl_lambda=config.get("model", "grl_lambda"), # also can move to config
         logger=logger
     )
     

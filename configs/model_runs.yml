@@ -5,3 +5,5 @@ runs:
   log_dir: runs/emotion_classifier_exp1/
 - label: hubert_2MLP_0Enc_wnoisedata_cosinewrmst_D0p3
   log_dir: runs/emotion_classifier_exp2/
+- label: hubert_2MLP_0Enc_wnoisedata_domadv_cosinewrmst_D0p3
+  log_dir: runs/emotion_classifier_exp3/

@@ -14,10 +14,12 @@ model:
   hidden_dim: 256
   num_classes: 8
   freeze_encoder: true #if false, all layer are unfroozen. If true, they are all frozen, the next line will set the layers to be unfreezed.
-  unfreeze_last_n_layers: null
+  unfreeze_last_n_layers: 2
+  num_domains: 2
+  grl_lambda: 1 #if grl_lambda = 0 we don't use adversarial network to forget about the data label. 
 
 training:
-  batch_size: 4
+  batch_size: 8
   epochs: 50
   lr: 0.0001
   max_lr: 0.003
@@ -33,10 +35,16 @@ pretrained_weights: #if enabled, it starts the training using weights from the p
   #runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3/checkpoint.pt is the most robust traning
 
 logging:
-  log_dir: "runs/emotion_classifier_exp2/" #this is a unique folder for the training. when it reruns it overrides and deletes the log file so update it as needed.
-  run_label: "hubert_2MLP_0Enc_wnoisedata_cosinewrmst_D0p3" #unique id give to the training. 
+  log_dir: "runs/emotion_classifier_exp3/" #this is a unique folder for the training. when it reruns it overrides and deletes the log file so update it as needed.
+  run_label: "hubert_2MLP_0Enc_wnoisedata_domadv_cosinewrmst_D0p3" #unique id give to the training. 
   track_run: true #track different models trained so that we can plot them together.
   runs_config_path: "configs/model_runs.yml" #where to store info about different experimentation
   misclassified_dir: "misclassified/"
   checkpoint_dir: "checkpoints/"
   save_misclassified: true #save misclassified audios
+
+notes: "Hypothesis: Feature space is learning to identify the dataset itself and resulting in poor clustering of emotion.
+ Domain Adversarial training to force the model to unlearn/forget the dataset label with negative gradient.
+ HuBERT last 2 layers unfrozen. 2-layer MLP classifier, training data augmented with musan noise, amplitude/Gain noise, time stretching  
+ 50 epochs, batch_size 8, lr: 0.0001, max_lr: 0.003, grl_lambda 1, 
+ "

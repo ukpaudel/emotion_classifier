@@ -27,6 +27,9 @@ def run_experiment(config_path="configs/config.yml"):
     run_name = config['logging'].get('run_label', log_dir)
     logger = setup_logger(log_dir, run_name)
     logger.info("===== Running Experiment =====")
+    notes = config['notes']
+    print(notes)
+    logger.info(f"===== notes ===== \n {notes}")
 
     if config['logging'].get('track_run', True):
         run_config_path = config['logging'].get('runs_config_path', 'configs/model_runs.yml')
@@ -39,8 +42,11 @@ def run_experiment(config_path="configs/config.yml"):
         num_classes=config.get("model", "num_classes"),
         freeze_encoder=config.get("model", "freeze_encoder"),
         unfreeze_last_n_layers=config.get("model", "unfreeze_last_n_layers", default=None),
+        num_domains=config.get("model", "num_domains"),  # you can parameterize this in config if you wish
+        grl_lambda=config.get("model", "grl_lambda"), # also can move to config
         logger=logger
     )
+
 
     from utils.latent_visualizer import register_hooks   # centralize hooks there
     register_hooks(model)
