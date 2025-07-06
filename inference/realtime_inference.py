@@ -9,6 +9,8 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from collections import deque, Counter
 import os
+from utils.emotion_labels import EMOTION_MAP
+
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -43,11 +45,7 @@ class RealTimeEmotion:
 
         print(f"[INFO] Using device: {self.device}")
 
-        self.emotion_map = {
-            0: 'Neutral', 1: 'Calm', 2: 'Happy', 3: 'Sad',
-            4: 'Angry', 5: 'Fearful', 6: 'Disgust', 7: 'Surprised'
-        }
-        self.current_probs = np.zeros(len(self.emotion_map))
+        self.current_probs = np.zeros(len(EMOTION_MAP))
         self.current_emotion = "Neutral"
 
         # store (label, absolute_sample_position)
@@ -60,7 +58,7 @@ class RealTimeEmotion:
         self.fig, (self.ax_bar, self.ax_wave) = plt.subplots(2, 1, figsize=(12, 6))
 
         # emotion bar
-        self.bar = self.ax_bar.bar(self.emotion_map.values(), self.current_probs)
+        self.bar = self.ax_bar.bar(EMOTION_MAP.values(), self.current_probs)
         self.ax_bar.set_ylim(0, 1)
         self.ax_bar.set_ylabel("Probability")
         self.ax_bar.set_title("Real-time Emotion Probabilities")
@@ -115,7 +113,7 @@ class RealTimeEmotion:
 
         # majority vote
         majority_class = Counter(chunk_preds).most_common(1)[0][0]
-        majority_label = self.emotion_map[majority_class]
+        majority_label = EMOTION_MAP[majority_class]
 
         # also update current_probs from the final chunk to refresh barplot
         self.current_probs = probs.squeeze().cpu().numpy()

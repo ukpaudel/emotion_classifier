@@ -2,6 +2,8 @@ import torch
 import os
 import yaml
 from torchaudio import save
+from utils.emotion_labels import EMOTION_MAP
+
 
 
 def save_checkpoint(model, optimizer, epoch, best_val_acc, checkpoint_path, logger=None, scheduler=None):
@@ -37,11 +39,6 @@ def load_checkpoint(model, optimizer, scheduler, checkpoint_path, device, logger
     return start_epoch, best_val_acc
 
 def save_misclassified_audio(waveforms, labels, predicted, lengths, config, epoch, logger=None, file_paths=None):
-    #the emotion_map vs file number are shifted by 1. Emotion map 0 = neutral = file index 01
-    EMOTION_MAP = {
-        0: 'Neutral', 1: 'Calm', 2: 'Happy', 3: 'Sad',
-        4: 'Angry', 5: 'Fearful', 6: 'Disgust', 7: 'Surprised'
-    }
     log_dir = config['logging']['log_dir']
     run_name = config['logging'].get('run_label', log_dir)
     class_folder= os.path.join("misclassified",log_dir,run_name)

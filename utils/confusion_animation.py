@@ -3,12 +3,7 @@ import os
 import matplotlib.pyplot as plt
 import seaborn as sns
 import imageio
-
-EMOTION_MAP = {
-    0: 'Neutral', 1: 'Calm', 2: 'Happy', 3: 'Sad',
-    4: 'Angry', 5: 'Fearful', 6: 'Disgust', 7: 'Surprised'
-}
-
+from utils.emotion_labels import EMOTION_MAP
 
 def animate_confusion(log_dir):
     cm_dict = np.load(os.path.join(log_dir, "confusions_all_epochs.npy"), allow_pickle=True).item()

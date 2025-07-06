@@ -15,6 +15,8 @@ from utils.logger import setup_logger
 from utils.model_utils import save_checkpoint, load_checkpoint, save_misclassified_audio
 from utils.run_tracker import update_model_runs_yaml
 from sklearn.metrics import confusion_matrix
+from utils.emotion_labels import EMOTION_MAP
+
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE" #this is a patch I hade to make to plot as I have dll conflicts. 
 """
 trainer.py
@@ -27,10 +29,6 @@ Handles training and validation loop with support for:
 
 Assumes: model implements forward(x, lengths)
 """
-EMOTION_MAP = {
-        0: 'Neutral', 1: 'Calm', 2: 'Happy', 3: 'Sad',
-        4: 'Angry', 5: 'Fearful', 6: 'Disgust', 7: 'Surprised'
-    }
 
 def train_model(model, train_loader, val_loader, config, run_name, resume_training=False):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

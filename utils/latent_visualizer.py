@@ -8,6 +8,9 @@ from sklearn.metrics import silhouette_score
 from scipy.spatial.distance import cdist
 import plotly.express as px
 from utils.feature_store import feature_store
+from utils.analyze_confusion_latent import analyze_confusion_and_latent
+from utils.emotion_labels import EMOTION_MAP
+
 
 
 def register_hooks(model):
@@ -64,10 +67,6 @@ def plot_latent_space(log_dir, logger):
     assert mlp_feats.shape[0] == N
     assert len(dataset_names) == N
 
-    EMOTION_MAP = {
-        0: 'Neutral', 1: 'Calm', 2: 'Happy', 3: 'Sad',
-        4: 'Angry', 5: 'Fearful', 6: 'Disgust', 7: 'Surprised'
-    }
     EMOTION_COLORS = {
         0: "#1f77b4",  # Neutral
         1: "#ff7f0e",  # Calm
@@ -123,9 +122,11 @@ def plot_latent_space(log_dir, logger):
         ax.set_title(name)
 
         # place text labels colored and larger
+        centroids = {}
         for emotion in np.unique(labels.numpy()):
             ix = np.where(labels.numpy() == emotion)[0]
             centroid = data[ix].mean(axis=0)
+            centroids[emotion] = centroid
             ax.text(
                 centroid[0], centroid[1],
                 EMOTION_MAP[int(emotion)],
@@ -134,6 +135,9 @@ def plot_latent_space(log_dir, logger):
                 weight="bold",
                 bbox=dict(facecolor="white", alpha=0.6, boxstyle="round,pad=0.3")
             )
+    #the centroids are from the last year i.e. MLP
+    analyze_confusion_and_latent(log_dir, centroids, logger)
+    
 
     handles, legend_labels = axes[0, 0].get_legend_handles_labels()
     by_label = dict(zip(legend_labels, handles))

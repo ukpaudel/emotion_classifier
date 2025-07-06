@@ -10,6 +10,8 @@ from matplotlib.animation import FuncAnimation
 from collections import deque, Counter
 from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
 import os
+from utils.emotion_labels import EMOTION_MAP
+
 
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
@@ -60,11 +62,7 @@ class RealTimeEmotionAndASR:
 
         print(f"[INFO] Using device: {self.device}")
 
-        self.emotion_map = {
-            0: 'Neutral', 1: 'Calm', 2: 'Happy', 3: 'Sad',
-            4: 'Angry', 5: 'Fearful', 6: 'Disgust', 7: 'Surprised'
-        }
-        self.current_probs = np.zeros(len(self.emotion_map))
+        self.current_probs = np.zeros(len(EMOTION_MAP))
         self.current_emotion = "Neutral"
         self.label_history = deque(maxlen=30)
         self.need_classify = False
@@ -78,7 +76,7 @@ class RealTimeEmotionAndASR:
         self.fig, (self.ax_bar, self.ax_wave) = plt.subplots(2, 1, figsize=(10, 6))
 
         # Emotion bar plot
-        self.bar = self.ax_bar.bar(self.emotion_map.values(), self.current_probs, color='skyblue')
+        self.bar = self.ax_bar.bar(EMOTION_MAP.values(), self.current_probs, color='skyblue')
         self.ax_bar.set_ylim(0, 1)
         self.ax_bar.set_ylabel("Probability")
         self.ax_bar.set_title("Real-time Emotion Probabilities")
@@ -134,7 +132,7 @@ class RealTimeEmotionAndASR:
 
         if buffer_rms < self.rms_threshold:
             print(f"[INFO] Skipping classification and ASR (low RMS={buffer_rms:.5f} < {self.rms_threshold:.5f})")
-            self.current_probs = np.zeros(len(self.emotion_map))
+            self.current_probs = np.zeros(len(EMOTION_MAP))
             self.current_text = ""
             self.current_emotion = self.silence_emotion_label
             return
@@ -161,7 +159,7 @@ class RealTimeEmotionAndASR:
             
         self.current_probs = probs.squeeze().cpu().numpy()
         majority_class_idx = torch.argmax(probs, dim=-1).item()
-        self.current_emotion = self.emotion_map[majority_class_idx]
+        self.current_emotion = EMOTION_MAP[majority_class_idx]
 
         print(f"[EMOTION] Classified emotion: {self.current_emotion} (Confidence: {self.current_probs[majority_class_idx]:.2f})")
 
@@ -176,7 +174,7 @@ class RealTimeEmotionAndASR:
         # Emotion bar update
         for i, bar in enumerate(self.bar):
             bar.set_height(self.current_probs[i])
-            if self.emotion_map[i] == self.current_emotion:
+            if EMOTION_MAP[i] == self.current_emotion:
                 bar.set_color('coral')
             else:
                 bar.set_color('skyblue')

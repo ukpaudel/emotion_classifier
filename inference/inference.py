@@ -5,6 +5,8 @@ import yaml
 import torch.nn.functional as F
 import os
 import numpy as np
+from utils.emotion_labels import EMOTION_MAP
+
 '''
 This file passes example data recorded at home and use it for inference.
 run for test
@@ -65,10 +67,6 @@ if __name__ == "__main__":
         print('Inference on ',audio_path)
         waveform = preprocess_audio(audio_path, target_sr)
         label, confidences = predict(model, waveform)
-        emotion_map = {
-                0: 'Neutral', 1: 'Calm', 2: 'Happy', 3: 'Sad',
-                4: 'Angry', 5: 'Fearful', 6: 'Disgust', 7: 'Surprised'
-            }
-        print(f"\n\n\n\nPredicted emotion: {emotion_map[label]} vs True Emotion: {audio_file.split('.')[0]}\n")
-        print(f"Confidence scores: {list(zip(emotion_map.values(),np.round(np.array(confidences),1)))}\n\n\n\n\n")
+        print(f"\n\n\n\nPredicted emotion: {EMOTION_MAP[label]} vs True Emotion: {audio_file.split('.')[0]}\n")
+        print(f"Confidence scores: {list(zip(EMOTION_MAP.values(),np.round(np.array(confidences),1)))}\n\n\n\n\n")
 

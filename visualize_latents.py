@@ -5,6 +5,7 @@ from data.dataloader import create_dataloaders
 from models.emotion_model import EmotionModel
 from utils.latent_visualizer import register_hooks, extract_features_for_visualization, plot_latent_space
 from utils.config import load_config
+from utils.analyze_confusion_latent import analyze_confusion_and_latent
 
 '''
 This will take weights and will run val_loader from the dataset and will visualize latent space from it. 
@@ -51,9 +52,8 @@ def visualize_from_checkpoint(config_path="configs/config.yml", checkpoint_path=
     shuffle=False,
     collate_fn=val_loader.collate_fn,
     num_workers=0
-)
-
-
+    )
+    
     extract_features_for_visualization(model, val_loader, device, logger)
     plot_latent_space(os.path.join(log_dir, run_name), logger)
 
