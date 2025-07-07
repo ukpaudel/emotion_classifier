@@ -180,11 +180,12 @@ def calculate_mmd_matrix(features, labels, logger, feature_name="Features"):
                         #logger.warning(f"Shapiro-Wilk test failed for dim {dim_idx} of '{EMOTION_MAP[emotion_idx]}' ({feature_name}): {e}")
                         continue
             if non_gaussian_dims_count > 0:
-                logger.warning(
-                    f"Gaussianity Check: For '{EMOTION_MAP[emotion_idx]}' in {feature_name}, "
-                    f"{non_gaussian_dims_count}/{feature_dim} dimensions failed Shapiro-Wilk test (p < {p_value_threshold}). "
-                    f"Note: MMD does not assume Gaussianity, but this highlights distributional characteristics."
-                )
+                # logger.warning(
+                #     f"Gaussianity Check: For '{EMOTION_MAP[emotion_idx]}' in {feature_name}, "
+                #     f"{non_gaussian_dims_count}/{feature_dim} dimensions failed Shapiro-Wilk test (p < {p_value_threshold}). "
+                #     f"Note: MMD does not assume Gaussianity, but this highlights distributional characteristics."
+                # )
+                continue
             else:
                 continue
                 #logger.info(f"Gaussianity Check: For '{EMOTION_MAP[emotion_idx]}' in {feature_name}, all {feature_dim} dimensions passed Shapiro-Wilk test (p >= {p_value_threshold}).")
