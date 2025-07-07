@@ -1,4 +1,7 @@
 import os
+import io
+import PIL.Image
+import torchvision
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
@@ -149,6 +152,12 @@ def plot_latent_space(log_dir, logger):
 
     plt.tight_layout()
     plt.savefig(os.path.join(log_dir, "latent_spaces_static.png"))
+    plt.savefig(buf,format='png')
+    buf.seek(0)
+    image = PIL.Image.open(buf)
+    image = torchvision.transforms.ToTensor()(image)
+    writer.add_image("latent_spaces_static", image)
+    plt.close(fig)
     logger.info(f"Saved static latent plots to {log_dir}/latent_spaces_static.png")
 
     # Optional interactive

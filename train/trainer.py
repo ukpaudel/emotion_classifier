@@ -229,8 +229,12 @@ def train_model(model, train_loader, val_loader, config, run_name, resume_traini
                 all_labels.extend(labels.cpu().numpy())
 
                 # Optional: save misclassified examples at the end of the epoch
-                if config['logging'].get("save_misclassified") and epoch==config['training']['epochs']-1:
-                    save_misclassified_audio(waveforms, labels, predicted, lengths, config, epoch, logger)
+                if config['logging'].get("save_misclassified") and epoch == config['training']['epochs'] - 1:
+                    try:
+                        save_misclassified_audio(waveforms, labels, predicted_emotion, lengths, config, epoch, logger)
+                    except Exception as e:
+                        logger.error(f"save_misclassified_audio failed: {e}")
+
 
         # calculate confusion matrix and convert it to a tensorboard image and log it
         cm = confusion_matrix(all_labels, all_preds)

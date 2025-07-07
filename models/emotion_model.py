@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import random
 from models.attention_classifier import AttentionClassifier
 from utils.encoder_loader import load_ssl_encoder
 from utils.feature_store import feature_store #for mutable dictionary that both EmotionModel and run_experiments will see
@@ -87,6 +88,30 @@ class EmotionModel(nn.Module):
         if logger:
             logger.info(f"Initialized EmotionModel with domain-adversarial head (domains={num_domains})")
 
+    
+    def apply_feature_masking(self, features, time_mask_width=10, feature_mask_width=20, p=0.5):
+        '''
+        Applies SpecAugment-style feature masking directly on HuBERT features.
+        '''
+        if random.random() > p:
+            return features
+        
+        B, T, F = features.shape
+        
+        for b in range(B):
+            t = random.randint(0, T - time_mask_width)
+            width = random.randint(1, time_mask_width)
+            features[b, t:t+width, :] = 0.0
+
+        for b in range(B):
+            f = random.randint(0, F - feature_mask_width)
+            width = random.randint(1, feature_mask_width)
+            features[b, :, f:f+width] = 0.0
+        
+        return features
+
+
+
     def forward(self, waveforms, lengths):
         """
         waveforms: Tensor [B, 1, T]
@@ -94,14 +119,15 @@ class EmotionModel(nn.Module):
         """
         x = waveforms.squeeze(1)
 
-        with torch.no_grad():
-            features, _ = self.encoder.extract_features(x)
-            features = features[-1].detach()  # shape [B, T_out, F]
-
-            # add this line to store pooled encoder features
-            pooled = features.mean(dim=1)  # mean over frames
-            for i in range(pooled.shape[0]):
-                feature_store["encoder"].append(pooled[i].cpu())
+        features, _ = self.encoder.extract_features(x)
+        features = features[-1] # shape [B, T_out, F]
+        #Applies SpecAugment-style feature masking directly on HuBERT features. nn.module knows if it is training
+        if self.training:
+            features = self.apply_feature_masking(features)
+        # add this line to store pooled encoder features
+        pooled = features.mean(dim=1)  # mean over frames
+        for i in range(pooled.shape[0]):
+            feature_store["encoder"].append(pooled[i].cpu())
 
         B, T_out, _ = features.shape
         T_in = waveforms.shape[-1]

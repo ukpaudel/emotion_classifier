@@ -1,3 +1,4 @@
+import torch
 import torch.multiprocessing as mp
 mp.set_start_method("spawn", force=True)
 
@@ -6,12 +7,13 @@ warnings.filterwarnings("ignore", category=UserWarning, module="pynndescent")
 
 import os
 import sys
-import torch
+
 from utils.config import load_config
 from utils.logger import setup_logger
 from utils.run_tracker import update_model_runs_yaml
 from utils.tensorboard_plot_utils import plot_from_tensorboard
 from utils.confusion_animation import animate_confusion, plot_final_confusion
+from visualize_latents import visualize_from_checkpoint
 from data.dataloader import create_dataloaders
 from models.emotion_model import EmotionModel
 from train.trainer import train_model
@@ -63,6 +65,7 @@ def run_experiment(config_path="configs/config.yml"):
 
     # optional
     logger.info("===== Latent visualization can now be run separately via visualize_latents.py =====")
+    visualize_from_checkpoint(config_path)
 
 if __name__ == "__main__":
     import argparse
