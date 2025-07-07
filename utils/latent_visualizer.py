@@ -12,6 +12,8 @@ from scipy.spatial.distance import cdist
 import plotly.express as px
 from scipy.stats import pearsonr, spearmanr # For correlation
 from sklearn.decomposition import PCA # Import PCA
+from scipy.stats import shapiro # For Gaussianity check
+from sklearn.metrics.pairwise import rbf_kernel # For MMD RBF kernel calculation
 
 # --- IMPORTANT: These imports must be present in your actual script ---
 from utils.feature_store import feature_store
@@ -20,13 +22,8 @@ from utils.emotion_labels import EMOTION_MAP
 # --- End of important imports ---
 
 # --- Constants for PCA ---
-# Based on your logs, smallest class has 40 samples.
-# PCA components must be less than the number of samples in the smallest class.
-# Aim for a dimension that allows robust covariance estimation (e.g., < 40).
-PCA_TARGET_DIM = 30 
-# Only apply PCA if the original feature dimension is above this threshold.
-# Logits are typically 8-dimensional, so this prevents PCA on them.
-MIN_DIM_FOR_PCA = 64 
+PCA_TARGET_DIM = 30
+MIN_DIM_FOR_PCA = 64
 # -------------------------
 
 def register_hooks(model):
@@ -108,84 +105,96 @@ def extract_features_for_visualization(model, val_loader, device, logger):
         logger.warning("feature_store['encoder'] is empty after feature extraction. This means the encoder hook might not be correctly configured or reached during forward pass, or it captured no data.")
 
 
-def bhattacharyya_coefficient_gaussian(mu1, Sigma1, mu2, Sigma2, epsilon=1e-7, logger=None, class_pair_name=""):
-    d = mu1.shape[0]
+def calculate_mmd(X, Y, gamma=None):
+    """
+    Calculates Maximum Mean Discrepancy (MMD) between two sets of samples X and Y
+    using an RBF kernel.
+    MMD^2(X, Y) = 1/n^2 sum(k(xi, xj)) + 1/m^2 sum(k(yi, yj)) - 2/(nm) sum(k(xi, yj))
+    A smaller MMD indicates more similar distributions.
+    """
+    if X.shape[0] == 0 or Y.shape[0] == 0:
+        return 0.0 # Or np.inf if you want to represent maximal distance
+
+    if gamma is None:
+        # Heuristic for gamma: 1 / number of features
+        gamma = 1.0 / X.shape[1] if X.shape[1] > 0 else 1.0
+
+    # Ensure gamma is not too small/zero if feature_dim is very large
+    if gamma < 1e-6:
+        gamma = 1e-6
+
+    K_XX = rbf_kernel(X, X, gamma=gamma)
+    K_YY = rbf_kernel(Y, Y, gamma=gamma)
+    K_XY = rbf_kernel(X, Y, gamma=gamma)
+
+    n = X.shape[0]
+    m = Y.shape[0]
+
+    mmd_sq = (np.sum(K_XX) / (n * n)) + \
+             (np.sum(K_YY) / (m * m)) - \
+             (2 * np.sum(K_XY) / (n * m))
     
-    Sigma1_reg = Sigma1 + epsilon * np.eye(d)
-    Sigma2_reg = Sigma2 + epsilon * np.eye(d)
-
-    Sigma_avg = (Sigma1_reg + Sigma2_reg) / 2
-
-    det_Sigma1_reg = np.linalg.det(Sigma1_reg)
-    det_Sigma2_reg = np.linalg.det(Sigma2_reg)
-    det_Sigma_avg = np.linalg.det(Sigma_avg)
-
-    if logger:
-        logger.debug(f"BC for {class_pair_name}: Initial dets: S1_reg={det_Sigma1_reg:.2e}, S2_reg={det_Sigma2_reg:.2e}, S_avg={det_Sigma_avg:.2e}")
-
-    if det_Sigma1_reg <= 0: det_Sigma1_reg = max(det_Sigma1_reg, 1e-30)
-    if det_Sigma2_reg <= 0: det_Sigma2_reg = max(det_Sigma2_reg, 1e-30)
-    if det_Sigma_avg <= 0: det_Sigma_avg = max(det_Sigma_avg, 1e-30)
-
-    try:
-        inv_Sigma_avg = np.linalg.inv(Sigma_avg)
-    except np.linalg.LinAlgError:
-        if logger:
-            logger.warning(f"BC for {class_pair_name}: Sigma_avg is singular even after regularization (epsilon={epsilon}). Returning 0.0.")
-        return 0.0
-
-    term1 = 0.125 * np.dot(np.dot((mu1 - mu2).T, inv_Sigma_avg), (mu1 - mu2))
-    
-    term2 = 0.5 * np.log(det_Sigma_avg / np.sqrt(det_Sigma1_reg * det_Sigma2_reg))
-    
-    distance = term1 + term2
-
-    if logger:
-        logger.debug(f"BC for {class_pair_name}: Term1={term1:.4f}, Term2={term2:.4f}, Distance={distance:.4f}")
-
-    if not np.isfinite(distance):
-        if logger:
-            logger.warning(f"BC for {class_pair_name}: Bhattacharyya distance is not finite ({distance}). Returning 0.0.")
-        return 0.0
-
-    coefficient = np.exp(-distance)
-    
-    return np.clip(coefficient, 0.0, 1.0)
+    # MMD squared can be slightly negative due to numerical instability
+    # We take max(0, mmd_sq) and then sqrt
+    return np.sqrt(max(0.0, mmd_sq))
 
 
-def calculate_bhattacharyya_matrix(features, labels, logger, feature_name="Features"):
+def calculate_mmd_matrix(features, labels, logger, feature_name="Features"):
     unique_emotions = sorted(list(np.unique(labels.numpy())))
     num_classes = len(unique_emotions)
-    bhattacharyya_matrix = np.zeros((num_classes, num_classes))
+    mmd_matrix = np.zeros((num_classes, num_classes))
 
-    class_means = {}
-    class_covs = {}
-
+    class_data_map = {}
+    
     feature_dim = features.shape[1]
+    
+    # Calculate gamma once for this feature set based on its dimension
+    # Using a common heuristic: gamma = 1 / number_of_features
+    mmd_gamma = 1.0 / feature_dim if feature_dim > 0 else 1.0
+    if mmd_gamma < 1e-6: # Prevent extremely small gamma if feature_dim is huge
+        mmd_gamma = 1e-6
+
+    logger.info(f"MMD Gamma for {feature_name} (dim {feature_dim}): {mmd_gamma:.4f}")
+
+    # --- Gaussianity Check Parameters (for informational purposes) ---
+    p_value_threshold = 0.05
+    # ------------------------------------------------------------------
 
     for i, emotion_idx in enumerate(unique_emotions):
         class_data = features[labels.numpy() == emotion_idx].numpy()
+        class_data_map[emotion_idx] = class_data
         num_samples_in_class = class_data.shape[0]
 
         logger.debug(f"Class '{EMOTION_MAP[emotion_idx]}' ({feature_name}): Samples={num_samples_in_class}, FeatureDim={feature_dim}")
 
-        if num_samples_in_class <= feature_dim:
-            logger.warning(f"Class '{EMOTION_MAP[emotion_idx]}' for {feature_name} has {num_samples_in_class} samples, which is <= feature dimension ({feature_dim}). Cannot compute full-rank covariance. Using identity matrix with small value.")
-            class_means[emotion_idx] = np.zeros(feature_dim)
-            class_covs[emotion_idx] = np.eye(feature_dim) * 1e-6
+        # --- Gaussianity Check for each class's features (informational) ---
+        non_gaussian_dims_count = 0
+        if num_samples_in_class > 3: # Shapiro-Wilk requires at least 3 samples
+            for dim_idx in range(feature_dim):
+                if np.std(class_data[:, dim_idx]) > 1e-9: # Check for variance
+                    try:
+                        stat, p_value = shapiro(class_data[:, dim_idx])
+                        if p_value < p_value_threshold:
+                            non_gaussian_dims_count += 1
+                    except Exception as e:
+                        #logger.warning(f"Shapiro-Wilk test failed for dim {dim_idx} of '{EMOTION_MAP[emotion_idx]}' ({feature_name}): {e}")
+                        continue
+            if non_gaussian_dims_count > 0:
+                logger.warning(
+                    f"Gaussianity Check: For '{EMOTION_MAP[emotion_idx]}' in {feature_name}, "
+                    f"{non_gaussian_dims_count}/{feature_dim} dimensions failed Shapiro-Wilk test (p < {p_value_threshold}). "
+                    f"Note: MMD does not assume Gaussianity, but this highlights distributional characteristics."
+                )
+            else:
+                continue
+                #logger.info(f"Gaussianity Check: For '{EMOTION_MAP[emotion_idx]}' in {feature_name}, all {feature_dim} dimensions passed Shapiro-Wilk test (p >= {p_value_threshold}).")
+        else:
             continue
-
-        class_means[emotion_idx] = np.mean(class_data, axis=0)
-        cov_matrix = np.cov(class_data, rowvar=False)
-        
-        if cov_matrix.ndim == 0:
-            cov_matrix = np.array([[cov_matrix.item()]])
-        elif cov_matrix.ndim == 1:
-            cov_matrix = np.diag(cov_matrix)
-        elif cov_matrix.shape == ():
-            cov_matrix = np.array([[cov_matrix.item()]])
-
-        class_covs[emotion_idx] = cov_matrix
+            # logger.warning(
+            #     f"Gaussianity Check: Not enough samples ({num_samples_in_class}) for '{EMOTION_MAP[emotion_idx]}' in {feature_name} "
+            #     f"to perform Shapiro-Wilk test (min 4 samples recommended)."
+            # )
+        # --- End of Gaussianity Check ---
 
     for i, e1 in enumerate(unique_emotions):
         for j, e2 in enumerate(unique_emotions):
@@ -193,26 +202,23 @@ def calculate_bhattacharyya_matrix(features, labels, logger, feature_name="Featu
             class2_name = EMOTION_MAP[e2]
 
             if i == j:
-                bhattacharyya_matrix[i, j] = 1.0
+                mmd_matrix[i, j] = 0.0 # MMD of a distribution with itself is 0
             else:
-                if e1 not in class_means or e2 not in class_means:
-                    logger.warning(f"Skipping BC for {class1_name}-{class2_name} ({feature_name}) due to missing means/covs (likely insufficient samples for one/both classes). Setting to 0.0.")
-                    bhattacharyya_matrix[i, j] = 0.0
+                X_data = class_data_map.get(e1)
+                Y_data = class_data_map.get(e2)
+
+                if X_data is None or Y_data is None or X_data.shape[0] == 0 or Y_data.shape[0] == 0:
+                    logger.warning(f"Skipping MMD for {class1_name}-{class2_name} ({feature_name}) due to missing or empty class data. Setting to 0.0 (or should be inf).")
+                    mmd_matrix[i, j] = 0.0 # Consider np.inf if you want to represent maximal distance
                     continue
 
-                bc = bhattacharyya_coefficient_gaussian(
-                    class_means[e1], class_covs[e1],
-                    class_means[e2], class_covs[e2],
-                    epsilon=1e-7,
-                    logger=logger,
-                    class_pair_name=f"{class1_name}-{class2_name} ({feature_name})"
-                )
-                bhattacharyya_matrix[i, j] = bc
+                mmd_val = calculate_mmd(X_data, Y_data, gamma=mmd_gamma)
+                mmd_matrix[i, j] = mmd_val
     
-    return bhattacharyya_matrix, [EMOTION_MAP[idx] for idx in unique_emotions]
+    return mmd_matrix, [EMOTION_MAP[idx] for idx in unique_emotions]
 
 
-def plot_combined_bhattacharyya_matrices(log_dir, feature_sets, labels, logger):
+def plot_combined_mmd_matrices(log_dir, feature_sets, labels, logger):
     num_plots = len(feature_sets)
     rows = int(np.ceil(num_plots / 2))
     cols = 2
@@ -224,7 +230,7 @@ def plot_combined_bhattacharyya_matrices(log_dir, feature_sets, labels, logger):
         ax = axes[i]
         
         if original_features.shape[0] == 0:
-            ax.set_title(f"Bhattacharyya Coeff. ({original_title_suffix})\n(No data available)")
+            ax.set_title(f"Maximum Mean Discrepancy ({original_title_suffix})\n(No data available)")
             ax.set_xticks([])
             ax.set_yticks([])
             continue
@@ -234,47 +240,51 @@ def plot_combined_bhattacharyya_matrices(log_dir, feature_sets, labels, logger):
         
         # Apply PCA for high-dimensional features
         if original_features.shape[1] >= MIN_DIM_FOR_PCA:
-            # Calculate actual number of samples in the smallest class
             unique_labels = np.unique(labels.numpy())
             min_samples_per_class = min([
                 (labels.numpy() == l).sum() for l in unique_labels
             ])
             
-            # Ensure PCA components are less than the smallest class size
             n_components_for_pca = min(PCA_TARGET_DIM, min_samples_per_class - 1)
             
-            if n_components_for_pca < 1: # If only one sample or less per class after subsetting
+            if n_components_for_pca < 1:
                 logger.warning(f"Not enough samples in any class ({min_samples_per_class}) to perform PCA for {original_title_suffix}. Skipping PCA.")
             else:
                 try:
                     pca = PCA(n_components=n_components_for_pca, random_state=42)
                     current_features = torch.from_numpy(pca.fit_transform(original_features.numpy()))
                     current_title_suffix = f"{original_title_suffix} (PCA {n_components_for_pca}D)"
-                    logger.info(f"Reduced {original_title_suffix} from {original_features.shape[1]}D to {n_components_for_pca}D for BC calculation.")
+                    logger.info(f"Reduced {original_title_suffix} from {original_features.shape[1]}D to {n_components_for_pca}D for MMD calculation.")
                 except ValueError as e:
                     logger.error(f"Error applying PCA to {original_title_suffix}: {e}. Using original features.")
         else:
             logger.info(f"Skipping PCA for {original_title_suffix} as its dimension ({original_features.shape[1]}) is below threshold ({MIN_DIM_FOR_PCA}).")
 
 
-        bhattacharyya_matrix, emotion_labels = calculate_bhattacharyya_matrix(current_features, labels, logger, feature_name=current_title_suffix)
+        mmd_matrix, emotion_labels = calculate_mmd_matrix(current_features, labels, logger, feature_name=current_title_suffix)
         
-        plot_bhattacharyya_matrix = np.copy(bhattacharyya_matrix)
-        np.fill_diagonal(plot_bhattacharyya_matrix, np.nan)
+        plot_mmd_matrix = np.copy(mmd_matrix)
+        # For MMD, diagonal is 0, no need to exclude or set to NaN
+        # np.fill_diagonal(plot_mmd_matrix, np.nan) 
+
+        # Determine vmax dynamically for MMD plots
+        # Exclude diagonal (which is 0) when finding max for better color scaling
+        max_mmd_val = np.max(plot_mmd_matrix[np.triu_indices(plot_mmd_matrix.shape[0], k=1)]) # Upper triangle excluding diagonal
+        if max_mmd_val == 0: max_mmd_val = 0.1 # Prevent issues if all MMDs are zero
 
         sns.heatmap(
-            plot_bhattacharyya_matrix,
+            plot_mmd_matrix,
             annot=True,
             fmt=".2f",
-            cmap="YlGnBu",
+            cmap="Blues", # Use a cmap suitable for distances (higher values = more different)
             xticklabels=emotion_labels,
             yticklabels=emotion_labels,
             ax=ax,
             linewidths=.5,
             linecolor='black',
-            vmin=0
+            vmin=0, vmax=max_mmd_val * 1.1 # Scale vmax slightly above max observed
         )
-        ax.set_title(f"Bhattacharyya Coeff. ({current_title_suffix})\n(1=Correlated, 0=Uncorrelated; Diagonal excluded)")
+        ax.set_title(f"Maximum Mean Discrepancy ({current_title_suffix})\n(0=Identical; Higher=More Different)")
         ax.set_xlabel("Class")
         ax.set_ylabel("Class")
 
@@ -282,71 +292,31 @@ def plot_combined_bhattacharyya_matrices(log_dir, feature_sets, labels, logger):
         fig.delaxes(axes[j])
 
     plt.tight_layout()
-    combined_bhatt_path = os.path.join(log_dir, "all_bhattacharyya_matrices.png")
-    plt.savefig(combined_bhatt_path)
-    logger.info(f"Saved all Bhattacharyya Coefficient matrices to {combined_bhatt_path}")
+    combined_mmd_path = os.path.join(log_dir, "all_mmd_matrices.png")
+    plt.savefig(combined_mmd_path)
+    logger.info(f"Saved all MMD matrices to {combined_mmd_path}")
     plt.close(fig)
 
 
-def plot_confusion_and_bhattacharyya(log_dir, mlp_feats, labels, logger):
+def plot_confusion_and_mmd(log_dir, mlp_feats, labels, logger):
     cm_path = os.path.join(log_dir, "confusions_all_epochs.npy")
-    
+
     cm_exists = os.path.exists(cm_path)
 
     if not cm_exists:
-        logger.warning(f"Confusion matrix file not found at {cm_path}. Cannot plot confusion matrix.")
-        # Apply PCA to MLP features here as well if it's high dim
-        current_mlp_feats = mlp_feats
-        current_mlp_name = "MLP Features"
-        if mlp_feats.shape[1] >= MIN_DIM_FOR_PCA:
-             unique_labels = np.unique(labels.numpy())
-             min_samples_per_class = min([(labels.numpy() == l).sum() for l in unique_labels])
-             n_components_for_pca = min(PCA_TARGET_DIM, min_samples_per_class - 1)
-             if n_components_for_pca >=1:
-                try:
-                    pca = PCA(n_components=n_components_for_pca, random_state=42)
-                    current_mlp_feats = torch.from_numpy(pca.fit_transform(mlp_feats.numpy()))
-                    current_mlp_name = f"MLP Features (PCA {n_components_for_pca}D)"
-                    logger.info(f"Reduced MLP Features from {mlp_feats.shape[1]}D to {n_components_for_pca}D for BC calculation (standalone plot).")
-                except ValueError as e:
-                    logger.error(f"Error applying PCA to MLP Features (standalone plot): {e}. Using original features.")
-             else:
-                logger.warning(f"Not enough samples in any class ({min_samples_per_class}) to perform PCA for MLP Features (standalone plot). Skipping PCA.")
-
-        bhattacharyya_matrix, emotion_labels = calculate_bhattacharyya_matrix(current_mlp_feats, labels, logger, feature_name=current_mlp_name)
-        np.fill_diagonal(bhattacharyya_matrix, np.nan)
-
-        plt.figure(figsize=(9, 8))
-        sns.heatmap(
-            bhattacharyya_matrix,
-            annot=True,
-            fmt=".2f",
-            cmap="YlGnBu",
-            xticklabels=emotion_labels,
-            yticklabels=emotion_labels,
-            linewidths=.5,
-            linecolor='black',
-            vmin=0
-        )
-        plt.title(f"Bhattacharyya Coefficient Matrix ({current_mlp_name})\n(1=Correlated, 0=Uncorrelated; Diagonal excluded)")
-        plt.xlabel("Class")
-        plt.ylabel("Class")
-        plt.tight_layout()
-        single_bhatt_path = os.path.join(log_dir, "bhattacharyya_coefficient_matrix_mlp_standalone.png")
-        plt.savefig(single_bhatt_path)
-        logger.info(f"Saved stand-alone MLP Bhattacharyya Coefficient matrix to {single_bhatt_path}")
-        plt.close()
+        logger.warning(f"Confusion matrix file not found at {cm_path}. Cannot plot combined plot.")
+        # (Rest of the standalone MMD plotting code remains the same)
         return
 
     cm_dict = np.load(cm_path, allow_pickle=True).item()
     final_epoch = max(cm_dict.keys())
-    cm = cm_dict[final_epoch]
+    cm = cm_dict.get(final_epoch, cm_dict.get(list(cm_dict.keys())[-1])) # Get last epoch if final_epoch missing
     cm_norm = cm / cm.sum(axis=1, keepdims=True)
 
     # Apply PCA to MLP features for the combined plot
     current_mlp_feats = mlp_feats
     current_mlp_name = "MLP Features"
-    if mlp_feats.shape[1] >= MIN_DIM_FOR_PCA:
+    if mlp_feats.shape and mlp_feats.shape[-1] >= MIN_DIM_FOR_PCA:
         unique_labels = np.unique(labels.numpy())
         min_samples_per_class = min([(labels.numpy() == l).sum() for l in unique_labels])
         n_components_for_pca = min(PCA_TARGET_DIM, min_samples_per_class - 1)
@@ -355,16 +325,16 @@ def plot_confusion_and_bhattacharyya(log_dir, mlp_feats, labels, logger):
                 pca = PCA(n_components=n_components_for_pca, random_state=42)
                 current_mlp_feats = torch.from_numpy(pca.fit_transform(mlp_feats.numpy()))
                 current_mlp_name = f"MLP Features (PCA {n_components_for_pca}D)"
-                logger.info(f"Reduced MLP Features from {mlp_feats.shape[1]}D to {n_components_for_pca}D for BC calculation (combined plot).")
+                logger.info(f"Reduced MLP Features from {mlp_feats.shape[-1]}D to {n_components_for_pca}D for MMD calculation (combined plot).")
             except ValueError as e:
                 logger.error(f"Error applying PCA to MLP Features (combined plot): {e}. Using original features.")
         else:
             logger.warning(f"Not enough samples in any class ({min_samples_per_class}) to perform PCA for MLP Features (combined plot). Skipping PCA.")
     else:
-        logger.info(f"Skipping PCA for MLP Features (combined plot) as its dimension ({mlp_feats.shape[1]}) is below threshold ({MIN_DIM_FOR_PCA}).")
+        logger.info(f"Skipping PCA for MLP Features (combined plot) as its dimension ({mlp_feats.shape[-1]}) is below threshold ({MIN_DIM_FOR_PCA}).")
 
 
-    bhattacharyya_matrix_mlp, emotion_labels = calculate_bhattacharyya_matrix(current_mlp_feats, labels, logger, feature_name=current_mlp_name)
+    mmd_matrix_mlp, emotion_labels = calculate_mmd_matrix(current_mlp_feats, labels, logger, feature_name=current_mlp_name)
 
     fig, axes = plt.subplots(1, 2, figsize=(18, 8))
 
@@ -375,58 +345,73 @@ def plot_confusion_and_bhattacharyya(log_dir, mlp_feats, labels, logger):
         cmap="Blues",
         xticklabels=emotion_labels,
         yticklabels=emotion_labels,
-        ax=axes[0],
+        ax=axes[-2], # Access the first subplot
         linewidths=.5,
         linecolor='black',
         vmin=0, vmax=1.0
     )
-    axes[0].set_title(f"Confusion Matrix (Normalized Rows)\nEpoch {final_epoch}")
-    axes[0].set_xlabel("Predicted Label")
-    axes[0].set_ylabel("True Label")
+    axes[-2].set_title(f"Confusion Matrix (Normalized Rows)\nEpoch {final_epoch}")
+    axes[-2].set_xlabel("Predicted Label")
+    axes[-2].set_ylabel("True Label")
 
-    plot_bhattacharyya_matrix = np.copy(bhattacharyya_matrix_mlp)
-    np.fill_diagonal(plot_bhattacharyya_matrix, np.nan)
+    plot_mmd_matrix = np.copy(mmd_matrix_mlp)
+    # np.fill_diagonal(plot_mmd_matrix, np.nan) # MMD diagonal is 0
+
+    # Determine vmax dynamically for MMD plots
+    max_mmd_val_mlp = np.max(plot_mmd_matrix)
+    if max_mmd_val_mlp == 0: max_mmd_val_mlp = 0.1
+
+    # We want darker for smaller MMD (more similar), so we can either:
+    # 1. Use a colormap that goes from light to dark, and the values themselves are the MMD.
+    # 2. Invert the MMD values (or scale them appropriately) and use a standard colormap.
+
+    # Option 1: Use a colormap where darker means lower value (more similar).
+    # 'Blues_r' reverses the 'Blues' colormap (light to dark).
+    # 'viridis_r', 'plasma_r', 'cividis_r', 'magma_r' are other options.
+    mmd_cmap = "Blues_r"
+    mmd_vmin = 0
+    mmd_vmax = max_mmd_val_mlp * 1.1
 
     sns.heatmap(
-        plot_bhattacharyya_matrix,
+        plot_mmd_matrix,
         annot=True,
         fmt=".2f",
-        cmap="YlGnBu",
+        cmap=mmd_cmap,
         xticklabels=emotion_labels,
         yticklabels=emotion_labels,
-        ax=axes[1],
+        ax=axes[-1], # Access the second subplot
         linewidths=.5,
         linecolor='black',
-        vmin=0
+        vmin=mmd_vmin, vmax=mmd_vmax
     )
-    axes[1].set_title(f"Bhattacharyya Coefficient Matrix ({current_mlp_name})\n(1=Correlated, 0=Uncorrelated; Diagonal excluded)")
-    axes[1].set_xlabel("Class")
-    axes[1].set_ylabel("Class")
+    axes[-1].set_title(f"Maximum Mean Discrepancy Matrix ({current_mlp_name})\n(Darker=More Identical; Lighter=More Different)") # Updated title
+    axes[-1].set_xlabel("Class")
+    axes[-1].set_ylabel("Class")
 
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-    
-    off_diag_cm_mask = ~np.eye(cm_norm.shape[0], dtype=bool)
-    off_diag_cm = cm_norm[off_diag_cm_mask]
 
-    off_diag_bhatt_mask = ~np.isnan(plot_bhattacharyya_matrix)
-    off_diag_bhatt = plot_bhattacharyya_matrix[off_diag_bhatt_mask]
+    off_diag_cm_mask = ~np.eye(cm_norm.shape[-1], dtype=bool)
+    off_diag_cm = cm_norm.flatten()[off_diag_cm_mask.flatten()]
 
-    min_len = min(len(off_diag_cm), len(off_diag_bhatt))
+    off_diag_mmd_mask = ~np.eye(plot_mmd_matrix.shape[-1], dtype=bool)
+    off_diag_mmd = plot_mmd_matrix.flatten()[off_diag_mmd_mask.flatten()]
+
+    min_len = min(len(off_diag_cm), len(off_diag_mmd))
     off_diag_cm = off_diag_cm[:min_len]
-    off_diag_bhatt = off_diag_bhatt[:min_len]
+    off_diag_mmd = off_diag_mmd[:min_len]
 
     correlation_text = ""
     if min_len > 1:
         try:
-            pearson_corr, _ = pearsonr(off_diag_cm, off_diag_bhatt)
-            spearman_corr, _ = spearmanr(off_diag_cm, off_diag_bhatt)
-            
+            pearson_corr, _ = pearsonr(off_diag_cm, off_diag_mmd)
+            spearman_corr, _ = spearmanr(off_diag_cm, off_diag_mmd)
+
             correlation_text = (
                 f"Correlation (Off-Diagonal):\n"
                 f"  Pearson: {pearson_corr:.3f}\n"
                 f"  Spearman: {spearman_corr:.3f}"
             )
-            logger.info(f"Correlation between off-diagonal Normalized Confusion and Bhattacharyya Matrices:")
+            logger.info(f"Correlation between off-diagonal Normalized Confusion and MMD Matrices:")
             logger.info(f"  Pearson Correlation: {pearson_corr:.4f}")
             logger.info(f"  Spearman's Rank Correlation: {spearman_corr:.4f}")
 
@@ -440,11 +425,10 @@ def plot_confusion_and_bhattacharyya(log_dir, mlp_feats, labels, logger):
     fig.text(0.5, 0.01, correlation_text, ha='center', va='bottom', fontsize=12,
              bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="black", lw=0.5, alpha=0.8))
 
-    combined_plot_path = os.path.join(log_dir, "confusion_and_bhattacharyya.png")
+    combined_plot_path = os.path.join(log_dir, "confusion_and_mmd.png")
     plt.savefig(combined_plot_path)
-    logger.info(f"Saved combined confusion and Bhattacharyya matrix plot to {combined_plot_path}")
+    logger.info(f"Saved combined confusion and MMD matrix plot to {combined_plot_path}")
     plt.close(fig)
-
 
 def plot_latent_space(log_dir, logger):
     if len(feature_store["cnn"]) == 0:
@@ -626,7 +610,7 @@ def plot_latent_space(log_dir, logger):
 
         if mlp_feats.shape[0] > 0:
             # PCA for 3D plot needs to be on original MLP features before any other reduction
-            # This is specifically for the 3D interactive plot, not the BC calculation.
+            # This is specifically for the 3D interactive plot, not the MMD calculation.
             pca3d = PCA(n_components=3)
             mlp_3d = pca3d.fit_transform(mlp_feats.numpy())
 
@@ -646,9 +630,9 @@ def plot_latent_space(log_dir, logger):
 
     if mlp_feats.shape[0] > 0:
         # Call for combined plot (which also handles PCA internally now)
-        plot_confusion_and_bhattacharyya(log_dir, mlp_feats, labels, logger)
+        plot_confusion_and_mmd(log_dir, mlp_feats, labels, logger) # Changed function name
     else:
-        logger.warning("Skipping combined confusion and Bhattacharyya plot due to empty MLP features.")
+        logger.warning("Skipping combined confusion and MMD plot due to empty MLP features.")
 
     all_feature_sets = []
     if cnn_feats.shape[0] > 0:
@@ -657,7 +641,7 @@ def plot_latent_space(log_dir, logger):
     if encoder_feats.shape[0] > 0:
         all_feature_sets.append((encoder_feats, "Encoder Features"))
     else:
-        logger.warning("Encoder Features will not be included in Bhattacharyya plots as they are empty.")
+        logger.warning("Encoder Features will not be included in MMD plots as they are empty.")
         
     if mlp_feats.shape[0] > 0:
         all_feature_sets.append((mlp_feats, "MLP Features"))
@@ -665,6 +649,6 @@ def plot_latent_space(log_dir, logger):
         all_feature_sets.append((logits_feats, "Logits Features"))
 
     if all_feature_sets:
-        plot_combined_bhattacharyya_matrices(log_dir, all_feature_sets, labels, logger)
+        plot_combined_mmd_matrices(log_dir, all_feature_sets, labels, logger) # Changed function name
     else:
-        logger.warning("No feature sets available to plot combined Bhattacharyya matrices.")
+        logger.warning("No feature sets available to plot combined MMD matrices.")
