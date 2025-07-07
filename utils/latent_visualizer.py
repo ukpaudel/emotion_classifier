@@ -7,9 +7,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 from umap import UMAP
-from sklearn.metrics import silhouette_score
 from scipy.spatial.distance import cdist
 import plotly.express as px
+
 from utils.feature_store import feature_store
 from utils.analyze_confusion_latent import analyze_confusion_and_latent
 from utils.emotion_labels import EMOTION_MAP
@@ -24,17 +24,25 @@ def register_hooks(model):
             feature_store["cnn"].append(pooled[i].detach().cpu())
 
     def mlp_hook(module, input, output):
+        # this is the penultimate features before final logits
         for i in range(output.shape[0]):
             feature_store["mlp"].append(output[i].detach().cpu())
 
+    def logits_hook(module, input, output):
+        # final classifier logits
+        for i in range(output.shape[0]):
+            feature_store["logits"].append(output[i].detach().cpu())
+
     model.encoder.feature_extractor.register_forward_hook(cnn_hook)
-    model.classifier.register_forward_hook(mlp_hook)
+    model.classifier.mlp[0].register_forward_hook(mlp_hook)  # hook on first MLP linear
+    model.classifier.register_forward_hook(logits_hook)       # hook on classifier output
 
 
 def extract_features_for_visualization(model, val_loader, device, logger):
     feature_store["cnn"].clear()
     feature_store["encoder"].clear()
     feature_store["mlp"].clear()
+    feature_store["logits"].clear()
     feature_store["labels"].clear()
     feature_store["dataset_ids"].clear()
 
@@ -61,13 +69,13 @@ def plot_latent_space(log_dir, logger):
     cnn_feats = torch.stack(feature_store["cnn"], dim=0)
     encoder_feats = torch.stack(feature_store["encoder"], dim=0)
     mlp_feats = torch.stack(feature_store["mlp"], dim=0)
+    logits_feats = torch.stack(feature_store["logits"], dim=0)
 
     labels = torch.tensor([int(x.item()) for x in feature_store["labels"]])
     dataset_names = np.array(feature_store["dataset_ids"])
     N = labels.shape[0]
-    assert cnn_feats.shape[0] == N
-    assert encoder_feats.shape[0] == N
-    assert mlp_feats.shape[0] == N
+
+    assert all(f.shape[0] == N for f in [cnn_feats, encoder_feats, mlp_feats, logits_feats])
     assert len(dataset_names) == N
 
     EMOTION_COLORS = {
@@ -87,25 +95,32 @@ def plot_latent_space(log_dir, logger):
 
     tsne_cnn = tsne.fit_transform(cnn_feats.numpy())
     umap_cnn = umap.fit_transform(cnn_feats.numpy())
+
     tsne_encoder = tsne.fit_transform(encoder_feats.numpy())
     umap_encoder = umap.fit_transform(encoder_feats.numpy())
+
     tsne_mlp = tsne.fit_transform(mlp_feats.numpy())
     umap_mlp = umap.fit_transform(mlp_feats.numpy())
+
+    tsne_logits = tsne.fit_transform(logits_feats.numpy())
+    umap_logits = umap.fit_transform(logits_feats.numpy())
 
     pairs = [
         (tsne_cnn, "CNN t-SNE"),
         (umap_cnn, "CNN UMAP"),
         (tsne_encoder, "Encoder t-SNE"),
         (umap_encoder, "Encoder UMAP"),
-        (tsne_mlp, "MLP t-SNE"),
-        (umap_mlp, "MLP UMAP"),
+        (tsne_mlp, "MLP Hidden t-SNE"),
+        (umap_mlp, "MLP Hidden UMAP"),
+        (tsne_logits, "Logits t-SNE"),
+        (umap_logits, "Logits UMAP"),
     ]
 
     unique_datasets = np.unique(dataset_names)
     marker_styles = ['o', 's', 'D', '^', 'P', 'X', '*', '+']
     marker_map = {ds: marker_styles[i % len(marker_styles)] for i, ds in enumerate(unique_datasets)}
 
-    fig, axes = plt.subplots(3, 2, figsize=(16, 20))
+    fig, axes = plt.subplots(4, 2, figsize=(18, 24))
     for ax, (data, name) in zip(axes.flatten(), pairs):
         for emotion in np.unique(labels.numpy()):
             emotion_ix = np.where(labels.numpy() == emotion)[0]
@@ -124,7 +139,7 @@ def plot_latent_space(log_dir, logger):
                     )
         ax.set_title(name)
 
-        # place text labels colored and larger
+        # centroid labels
         centroids = {}
         for emotion in np.unique(labels.numpy()):
             ix = np.where(labels.numpy() == emotion)[0]
@@ -138,9 +153,9 @@ def plot_latent_space(log_dir, logger):
                 weight="bold",
                 bbox=dict(facecolor="white", alpha=0.6, boxstyle="round,pad=0.3")
             )
-    #the centroids are from the last year i.e. MLP
+
+    # analyze confusion against the final layer centroids (logits)
     analyze_confusion_and_latent(log_dir, centroids, logger)
-    
 
     handles, legend_labels = axes[0, 0].get_legend_handles_labels()
     by_label = dict(zip(legend_labels, handles))
@@ -151,16 +166,11 @@ def plot_latent_space(log_dir, logger):
     )
 
     plt.tight_layout()
-    plt.savefig(os.path.join(log_dir, "latent_spaces_static.png"))
-    plt.savefig(buf,format='png')
-    buf.seek(0)
-    image = PIL.Image.open(buf)
-    image = torchvision.transforms.ToTensor()(image)
-    writer.add_image("latent_spaces_static", image)
-    plt.close(fig)
-    logger.info(f"Saved static latent plots to {log_dir}/latent_spaces_static.png")
+    static_path = os.path.join(log_dir, "latent_spaces_static.png")
+    plt.savefig(static_path)
+    logger.info(f"Saved static latent plots to {static_path}")
 
-    # Optional interactive
+    # Interactive plot for CNN
     px_cnn = px.scatter(
         x=tsne_cnn[:, 0], y=tsne_cnn[:, 1],
         color=label_names,
@@ -168,6 +178,27 @@ def plot_latent_space(log_dir, logger):
         title="Interactive CNN t-SNE"
     )
     px_cnn.write_html(os.path.join(log_dir, "tsne_cnn_interactive.html"))
-    logger.info("Saved interactive plotly CNN t-SNE.")
+    logger.info("Saved interactive Plotly CNN t-SNE.")
+
+    from sklearn.decomposition import PCA
+
+    # Reduce to 3D for MLP
+    pca3d = PCA(n_components=3)
+    mlp_3d = pca3d.fit_transform(mlp_feats.numpy())
+
+    px_mlp3d = px.scatter_3d(
+        x=mlp_3d[:, 0],
+        y=mlp_3d[:, 1],
+        z=mlp_3d[:, 2],
+        color=label_names,
+        hover_data={"dataset": dataset_names},
+        title="Interactive 3D MLP Latent Space"
+    )
+    # adjust marker size after creation
+    px_mlp3d.update_traces(marker=dict(size=3))
+
+    px_mlp3d.write_html(os.path.join(log_dir, "mlp_latent_3d.html"))
+    logger.info("Saved interactive 3D Plotly MLP latent space.")
+
 
 

@@ -4,6 +4,7 @@ feature_store = {
     "cnn": [],
     "encoder": [],
     "mlp": [],
+    "logits": [],
     "labels": [],
-    "dataset_ids": []
+    "dataset_ids": [],
 }
