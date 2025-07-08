@@ -18,6 +18,9 @@ from sklearn.metrics import confusion_matrix
 from utils.emotion_labels import EMOTION_MAP
 from utils.domain_to_idx import DOMAIN_TO_IDX
 
+from models.losses import TripletLoss 
+
+
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE" #this is a patch I hade to make to plot as I have dll conflicts. 
 """
 trainer.py
@@ -129,6 +132,13 @@ def train_model(model, train_loader, val_loader, config, run_name, resume_traini
 
     # === LET THE TRAINING BEGIN ===
     all_confusions = {}
+    # Initialize Triplet Loss
+    triplet_criterion = TripletLoss(margin=config['triplet_loss']['margin'], distance_metric=config['triplet_loss']['distance_metric'])
+    
+    # Weights for combined loss
+    classification_loss_weight = config['classification_loss_weight'] # e.g., 1.0
+    triplet_loss_weight = config['triplet_loss']['weight'] # e.g., 0.1 or 0.01
+
     for epoch in range(start_epoch, config['training']['epochs']):
         model.train()
         total_loss = 0.0
@@ -164,11 +174,19 @@ def train_model(model, train_loader, val_loader, config, run_name, resume_traini
                 device=device
             )
             # Forward pass
-            emotion_logits, domain_logits = model(waveforms, lengths)
+            emotion_logits, domain_logits, pooled_encoder_features = model(waveforms, lengths) #pooled_encoder_features is the output of HuBERT
             
             emotion_loss = criterion(emotion_logits, labels)
             domain_loss = criterion(domain_logits, domain_labels)
-            loss_both_classifier = emotion_loss + alpha * domain_loss
+            # Calculate Triplet Loss
+            # Ensure pooled_encoder_features are suitable for triplet loss (e.g., float)
+            triplet_loss = triplet_criterion(pooled_encoder_features, labels)
+
+            # Combine the losses
+            # If triplet_loss_weight is 0, it effectively just uses classification loss
+            loss_both_classifier = (classification_loss_weight * emotion_loss) + (triplet_loss_weight * triplet_loss)
+
+            #loss_both_classifier = emotion_loss + alpha * domain_loss
 
             optimizer.zero_grad()
 
@@ -215,7 +233,7 @@ def train_model(model, train_loader, val_loader, config, run_name, resume_traini
                     device=device
                 )
                 waveforms, labels, lengths = waveforms.to(device), labels.to(device), lengths.to(device)
-                emotion_logits, domain_logits= model(waveforms, lengths)
+                emotion_logits, domain_logits,_= model(waveforms, lengths)
                 _, predicted_emotion= torch.max(emotion_logits, 1)
                 _, predicted_domain = torch.max(domain_logits, 1)
 

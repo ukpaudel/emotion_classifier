@@ -51,13 +51,16 @@ def register_hooks(model):
             feature_store["encoder"].append(pooled_encoder[i].detach().cpu())
 
 
-    def mlp_hook(module, input, output):
-        for i in range(output.shape[0]):
-            feature_store["mlp"].append(output[i].detach().cpu())
+    # mlp_hook has been removed as per the user's request.
+    # def mlp_hook(module, input, output):
+    #     for i in range(output.shape[0]):
+    #         feature_store["mlp"].append(output[i].detach().cpu())
 
     def logits_hook(module, input, output):
-        for i in range(output.shape[0]):
-            feature_store["logits"].append(output[i].detach().cpu())
+        # The output of AttentionClassifier is now (logits, latent_features)
+        logits = output[0] # The first element of the tuple is the logits
+        for i in range(logits.shape[0]):
+            feature_store["logits"].append(logits[i].detach().cpu())
 
     if hasattr(model, 'encoder') and hasattr(model.encoder, 'feature_extractor'):
          model.encoder.feature_extractor.register_forward_hook(cnn_hook)
@@ -74,15 +77,25 @@ def register_hooks(model):
             model.encoder.register_forward_hook(encoder_general_hook)
     else:
         print("Warning: model.encoder not found. Encoder features might not be collected.")
-
-    model.classifier.mlp[0].register_forward_hook(mlp_hook)
+    
+    # Removed the mlp_hook registration as per the user's request.
+    # The warning message for mlp_latent is also removed as it's no longer used for a hook.
+    # if hasattr(model.classifier, 'mlp_latent'):
+    #     model.classifier.mlp_latent.register_forward_hook(mlp_hook)
+    # else:
+    #     print("Warning: model.classifier.mlp_latent not found. MLP features might not be collected.")
+    
+    # This hook is still on the main classifier module, but the hook function
+    # now expects a tuple output.
     model.classifier.register_forward_hook(logits_hook)
+    # The warning for logits hook being registered on a module returning a tuple is common
+    # as long as your hook handles the tuple correctly, it's fine.
 
 
 def extract_features_for_visualization(model, val_loader, device, logger):
     feature_store["cnn"].clear()
     feature_store["encoder"].clear()
-    feature_store["mlp"].clear()
+    feature_store["mlp"].clear() # Still clear it, just in case, though it won't be populated by a hook now
     feature_store["logits"].clear()
     feature_store["labels"].clear()
     feature_store["dataset_ids"].clear()
@@ -94,7 +107,9 @@ def extract_features_for_visualization(model, val_loader, device, logger):
                 continue
             waveforms, labels, lengths, dataset_ids = batch_data
             waveforms = waveforms.to(device)
-            _ = model(waveforms, lengths) # This populates feature_store via hooks
+            # The model forward pass itself still populates feature_store["encoder"]
+            # directly for the pooled features from the encoder, and logits via hook.
+            _ = model(waveforms, lengths) 
 
             for i in range(labels.shape[0]):
                 feature_store["labels"].append(labels[i].cpu())
@@ -299,14 +314,13 @@ def plot_combined_mmd_matrices(log_dir, feature_sets, labels, logger):
     plt.close(fig)
 
 
-def plot_confusion_and_mmd(log_dir, mlp_feats, labels, logger):
+def plot_confusion_and_mmd(log_dir, feature_for_mmd, labels, logger, feature_name_for_mmd="Features"): # Renamed mlp_feats to feature_for_mmd
     cm_path = os.path.join(log_dir, "confusions_all_epochs.npy")
 
     cm_exists = os.path.exists(cm_path)
 
     if not cm_exists:
         logger.warning(f"Confusion matrix file not found at {cm_path}. Cannot plot combined plot.")
-        # (Rest of the standalone MMD plotting code remains the same)
         return
 
     cm_dict = np.load(cm_path, allow_pickle=True).item()
@@ -314,28 +328,28 @@ def plot_confusion_and_mmd(log_dir, mlp_feats, labels, logger):
     cm = cm_dict.get(final_epoch, cm_dict.get(list(cm_dict.keys())[-1])) # Get last epoch if final_epoch missing
     cm_norm = cm / cm.sum(axis=1, keepdims=True)
 
-    # Apply PCA to MLP features for the combined plot
-    current_mlp_feats = mlp_feats
-    current_mlp_name = "MLP Features"
-    if mlp_feats.shape and mlp_feats.shape[-1] >= MIN_DIM_FOR_PCA:
+    # Apply PCA for the chosen features for the combined plot
+    current_mmd_features = feature_for_mmd
+    current_mmd_name = feature_name_for_mmd
+    if feature_for_mmd.shape and feature_for_mmd.shape[-1] >= MIN_DIM_FOR_PCA:
         unique_labels = np.unique(labels.numpy())
         min_samples_per_class = min([(labels.numpy() == l).sum() for l in unique_labels])
         n_components_for_pca = min(PCA_TARGET_DIM, min_samples_per_class - 1)
         if n_components_for_pca >= 1:
             try:
                 pca = PCA(n_components=n_components_for_pca, random_state=42)
-                current_mlp_feats = torch.from_numpy(pca.fit_transform(mlp_feats.numpy()))
-                current_mlp_name = f"MLP Features (PCA {n_components_for_pca}D)"
-                logger.info(f"Reduced MLP Features from {mlp_feats.shape[-1]}D to {n_components_for_pca}D for MMD calculation (combined plot).")
+                current_mmd_features = torch.from_numpy(pca.fit_transform(feature_for_mmd.numpy()))
+                current_mmd_name = f"{feature_name_for_mmd} (PCA {n_components_for_pca}D)"
+                logger.info(f"Reduced {feature_name_for_mmd} from {feature_for_mmd.shape[-1]}D to {n_components_for_pca}D for MMD calculation (combined plot).")
             except ValueError as e:
-                logger.error(f"Error applying PCA to MLP Features (combined plot): {e}. Using original features.")
+                logger.error(f"Error applying PCA to {feature_name_for_mmd} (combined plot): {e}. Using original features.")
         else:
-            logger.warning(f"Not enough samples in any class ({min_samples_per_class}) to perform PCA for MLP Features (combined plot). Skipping PCA.")
+            logger.warning(f"Not enough samples in any class ({min_samples_per_class}) to perform PCA for {feature_name_for_mmd} (combined plot). Skipping PCA.")
     else:
-        logger.info(f"Skipping PCA for MLP Features (combined plot) as its dimension ({mlp_feats.shape[-1]}) is below threshold ({MIN_DIM_FOR_PCA}).")
+        logger.info(f"Skipping PCA for {feature_name_for_mmd} (combined plot) as its dimension ({feature_for_mmd.shape[-1]}) is below threshold ({MIN_DIM_FOR_PCA}).")
 
 
-    mmd_matrix_mlp, emotion_labels = calculate_mmd_matrix(current_mlp_feats, labels, logger, feature_name=current_mlp_name)
+    mmd_matrix_to_plot, emotion_labels = calculate_mmd_matrix(current_mmd_features, labels, logger, feature_name=current_mmd_name)
 
     fig, axes = plt.subplots(1, 2, figsize=(18, 8))
 
@@ -355,7 +369,7 @@ def plot_confusion_and_mmd(log_dir, mlp_feats, labels, logger):
     axes[-2].set_xlabel("Predicted Label")
     axes[-2].set_ylabel("True Label")
 
-    plot_mmd_matrix = np.copy(mmd_matrix_mlp)
+    plot_mmd_matrix = np.copy(mmd_matrix_to_plot)
     # np.fill_diagonal(plot_mmd_matrix, np.nan) # MMD diagonal is 0
 
     # Determine vmax dynamically for MMD plots
@@ -385,7 +399,7 @@ def plot_confusion_and_mmd(log_dir, mlp_feats, labels, logger):
         linecolor='black',
         vmin=mmd_vmin, vmax=mmd_vmax
     )
-    axes[-1].set_title(f"Maximum Mean Discrepancy Matrix ({current_mlp_name})\n(Darker=More Identical; Lighter=More Different)") # Updated title
+    axes[-1].set_title(f"Maximum Mean Discrepancy Matrix ({current_mmd_name})\n(Darker=More Identical; Lighter=More Different)") # Updated title
     axes[-1].set_xlabel("Class")
     axes[-1].set_ylabel("Class")
 
@@ -442,9 +456,22 @@ def plot_latent_space(log_dir, logger):
         encoder_feats = torch.stack(feature_store["encoder"], dim=0)
     else:
         logger.warning("feature_store['encoder'] is empty. Encoder plots will not show data.")
+        # Create an empty tensor with appropriate shape for subsequent operations if needed
+        # Assuming feature_dim can be inferred from cnn_feats or a default.
+        # Here, defaulting to 1 if cnn_feats is also empty, otherwise matching cnn_feats dim.
         encoder_feats = torch.empty(0, cnn_feats.shape[1] if cnn_feats.shape[0] > 0 else 1) 
 
-    mlp_feats = torch.stack(feature_store["mlp"], dim=0)
+    # --- CRITICAL FIX START ---
+    # Check if feature_store["mlp"] is empty before stacking
+    if len(feature_store["mlp"]) > 0:
+        mlp_feats = torch.stack(feature_store["mlp"], dim=0)
+    else:
+        logger.info("feature_store['mlp'] is empty, initializing mlp_feats as an empty tensor.")
+        # Create an empty tensor with appropriate shape, or handle propagation of empty data
+        # Best to match a potential feature dimension if available, otherwise just 0,0
+        mlp_feats = torch.empty(0, cnn_feats.shape[1] if cnn_feats.shape[0] > 0 else 1)
+    # --- CRITICAL FIX END ---
+    
     logits_feats = torch.stack(feature_store["logits"], dim=0)
 
     labels = torch.tensor([int(x.item()) for x in feature_store["labels"]])
@@ -473,7 +500,7 @@ def plot_latent_space(log_dir, logger):
 
     tsne_cnn, umap_cnn = np.empty((0, 2)), np.empty((0, 2))
     tsne_encoder, umap_encoder = np.empty((0, 2)), np.empty((0, 2))
-    tsne_mlp, umap_mlp = np.empty((0, 2)), np.empty((0, 2))
+    tsne_mlp, umap_mlp = np.empty((0, 2)), np.empty((0, 2)) # mlp_feats might be empty now
     tsne_logits, umap_logits = np.empty((0, 2)), np.empty((0, 2))
 
     if N > 1 and tsne_perplexity > 0:
@@ -489,11 +516,12 @@ def plot_latent_space(log_dir, logger):
         else:
             logger.warning("Encoder features have insufficient samples for t-SNE/UMAP or are empty. This plot will be skipped or show 'No data'.")
 
-        if mlp_feats.shape[0] > 1:
+        # Handle t-SNE/UMAP for mlp_feats if it's empty due to hook removal
+        if mlp_feats.shape[0] > 1: # Only attempt transform if there's data
             tsne_mlp = tsne.fit_transform(mlp_feats.numpy())
             umap_mlp = umap.fit_transform(mlp_feats.numpy())
         else:
-            logger.warning("MLP features have insufficient samples for t-SNE/UMAP.")
+            logger.info("MLP features are empty or have insufficient samples for t-SNE/UMAP, skipping these plots.") # Changed to info from warning
 
         if logits_feats.shape[0] > 1:
             tsne_logits = tsne.fit_transform(logits_feats.numpy())
@@ -516,12 +544,23 @@ def plot_latent_space(log_dir, logger):
     else:
         logger.warning("Encoder t-SNE/UMAP plots will be skipped because data is empty or insufficient for transformation.")
 
-    pairs.extend([
-        (tsne_mlp, "MLP Hidden t-SNE"),
-        (umap_mlp, "MLP Hidden UMAP"),
-        (tsne_logits, "Logits t-SNE"),
-        (umap_logits, "Logits UMAP"),
-    ])
+    # Only include MLP in pairs if it has data (which it won't if hook is removed)
+    if tsne_mlp.shape[0] > 0:
+        pairs.extend([
+            (tsne_mlp, "MLP Hidden t-SNE"),
+            (umap_mlp, "MLP Hidden UMAP"),
+        ])
+    else:
+        logger.info("MLP Hidden t-SNE/UMAP plots will be skipped.") # Changed from warning to info
+
+    if tsne_logits.shape[0] > 0:
+        pairs.extend([
+            (tsne_logits, "Logits t-SNE"),
+            (umap_logits, "Logits UMAP"),
+        ])
+    else:
+        logger.warning("Logits t-SNE/UMAP plots will be skipped.")
+
 
     num_rows_for_plots = len(pairs) // 2 + (len(pairs) % 2 > 0)
     fig, axes = plt.subplots(num_rows_for_plots, 2, figsize=(18, num_rows_for_plots * 6))
@@ -609,31 +648,45 @@ def plot_latent_space(log_dir, logger):
             px_cnn.write_html(os.path.join(log_dir, "tsne_cnn_interactive.html"))
             logger.info("Saved interactive Plotly CNN t-SNE.")
 
-        if mlp_feats.shape[0] > 0:
-            # PCA for 3D plot needs to be on original MLP features before any other reduction
-            # This is specifically for the 3D interactive plot, not the MMD calculation.
-            pca3d = PCA(n_components=3)
-            mlp_3d = pca3d.fit_transform(mlp_feats.numpy())
+        # For the 3D plot, we now use Encoder Features if they exist.
+        features_for_3d_plot = encoder_feats # Default to encoder features
+        features_for_3d_name = "Encoder"
+        
+        # This fallback is unlikely to be needed if hooks are working as intended for encoder
+        # but is here for robustness.
+        if features_for_3d_plot.shape[0] == 0 and mlp_feats.shape[0] > 0:
+            features_for_3d_plot = mlp_feats
+            features_for_3d_name = "MLP"
 
-            px_mlp3d = px.scatter_3d(
-                x=mlp_3d[:, 0],
-                y=mlp_3d[:, 1],
-                z=mlp_3d[:, 2],
+        if features_for_3d_plot.shape[0] > 0:
+            pca3d = PCA(n_components=3)
+            # Ensure features_for_3d_plot is numpy for PCA.
+            data_3d = pca3d.fit_transform(features_for_3d_plot.numpy())
+
+            px_3d = px.scatter_3d( # Renamed px_mlp3d to px_3d
+                x=data_3d[:, 0],
+                y=data_3d[:, 1],
+                z=data_3d[:, 2],
                 color=label_names,
                 hover_data={"dataset": dataset_names},
-                title="Interactive 3D MLP Latent Space"
+                title=f"Interactive 3D {features_for_3d_name} Latent Space" # Dynamic title
             )
-            px_mlp3d.update_traces(marker=dict(size=3))
-            px_mlp3d.write_html(os.path.join(log_dir, "mlp_latent_3d.html"))
-            logger.info("Saved interactive 3D Plotly MLP latent space.")
+            px_3d.update_traces(marker=dict(size=3))
+            px_3d.write_html(os.path.join(log_dir, f"{features_for_3d_name.lower()}_latent_3d.html")) # Dynamic filename
+            logger.info(f"Saved interactive 3D Plotly {features_for_3d_name} latent space.")
+        else:
+            logger.warning("Skipping interactive 3D Plotly plot due to empty features for 3D visualization.")
     else:
         logger.warning("Skipping interactive Plotly plots due to insufficient samples.")
 
-    if mlp_feats.shape[0] > 0:
-        # Call for combined plot (which also handles PCA internally now)
-        plot_confusion_and_mmd(log_dir, mlp_feats, labels, logger) # Changed function name
+    # Modified: plot_confusion_and_mmd now takes a 'feature_for_mmd' argument
+    # We should now pass encoder_feats for MMD if that's the primary feature you're interested in,
+    # rather than mlp_feats, as triplet loss is now on encoder.
+    if encoder_feats.shape[0] > 0:
+        # Pass encoder_feats as the primary feature for the combined plot MMD
+        plot_confusion_and_mmd(log_dir, encoder_feats, labels, logger, feature_name_for_mmd="Encoder Features")
     else:
-        logger.warning("Skipping combined confusion and MMD plot due to empty MLP features.")
+        logger.warning("Skipping combined confusion and MMD plot due to empty Encoder features.")
 
     all_feature_sets = []
     if cnn_feats.shape[0] > 0:
@@ -644,12 +697,16 @@ def plot_latent_space(log_dir, logger):
     else:
         logger.warning("Encoder Features will not be included in MMD plots as they are empty.")
         
-    if mlp_feats.shape[0] > 0:
+    # MLP Features will now typically be empty and won't be added to all_feature_sets
+    if mlp_feats.shape[0] > 0: # This check is still necessary in case it somehow got data or for debugging
         all_feature_sets.append((mlp_feats, "MLP Features"))
+    else:
+        logger.info("MLP Features will not be included in combined MMD plots as they are empty.")
+
     if logits_feats.shape[0] > 0:
         all_feature_sets.append((logits_feats, "Logits Features"))
 
     if all_feature_sets:
-        plot_combined_mmd_matrices(log_dir, all_feature_sets, labels, logger) # Changed function name
+        plot_combined_mmd_matrices(log_dir, all_feature_sets, labels, logger)
     else:
         logger.warning("No feature sets available to plot combined MMD matrices.")

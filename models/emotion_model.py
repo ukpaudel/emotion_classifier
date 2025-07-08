@@ -125,9 +125,9 @@ class EmotionModel(nn.Module):
         if self.training:
             features = self.apply_feature_masking(features)
         # add this line to store pooled encoder features
-        pooled = features.mean(dim=1)  # mean over frames
-        for i in range(pooled.shape[0]):
-            feature_store["encoder"].append(pooled[i].cpu())
+        pooled_encoder_features = features.mean(dim=1)  # [B, F], F is self.feature_dim
+        for i in range(pooled_encoder_features.shape[0]):
+            feature_store["encoder"].append(pooled_encoder_features[i].cpu())
 
         B, T_out, _ = features.shape
         T_in = waveforms.shape[-1]
@@ -136,11 +136,12 @@ class EmotionModel(nn.Module):
         mask = torch.zeros(B, T_out, dtype=torch.bool, device=features.device)
         for i, l in enumerate(downsampled_lengths):
             mask[i, :l] = 1
-            
-        logits_emotion = self.classifier(features, mask)
+        
+        # Call the AttentionClassifier, which now returns both logits and latent_features
+        logits_emotion, latent_features = self.classifier(features, mask)
 
         # Domain classifier with GRL
-        grl_features = grad_reverse(pooled, lambda_=self.grl_lambda)
+        grl_features = grad_reverse(pooled_encoder_features, lambda_=self.grl_lambda)
         logits_domain = self.domain_classifier(grl_features)
 
-        return logits_emotion, logits_domain
+        return logits_emotion, logits_domain, pooled_encoder_features #output of the transformer encoder
