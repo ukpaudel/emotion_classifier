@@ -10,17 +10,27 @@ data:
 
 model:
   encoder_name: "hubert" #wav2vec2
-  dropout: 0.3
-  hidden_dim: 256
+  dropout: 0.5
+  hidden_dim: 512 #256
   num_classes: 8
   freeze_encoder: true #if false, all layer are unfroozen. If true, they are all frozen, the next line will set the layers to be unfreezed.
   unfreeze_last_n_layers: 2
-  num_domains: 2
-  grl_lambda: 1 #if grl_lambda = 0 we don't use adversarial network to forget about the data label. 
+  num_domains: 2 #different types of data. It has to match with distinctive dataset we pass above. 
+  grl_lambda: 0 #if grl_lambda = 0 we don't use adversarial network to forget about the data label. 
+
+# tiplet loss function to make the latent feature more tighly distributed. The toptal loss is weighted 
+triplet_loss:
+  enable: True # Set to False to disable triplet loss
+  margin: 1.0 # Hyperparameter for triplet loss (e.g., 0.2 to 1.0)
+  distance_metric: "euclidean" # 'euclidean' or 'cosine'
+  weight: 0.1 # Weight of triplet loss in total loss (e.g., 0.01 to 0.5)
+
+# Adjust classification loss weight if needed, though 1.0 is common
+classification_loss_weight: 1.0
 
 training:
   batch_size: 8
-  epochs: 50
+  epochs: 20
   lr: 0.0001
   max_lr: 0.003
   min_lr: 0.00001
@@ -35,16 +45,20 @@ pretrained_weights: #if enabled, it starts the training using weights from the p
   #runs/emotion_classifier_v18/hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3/checkpoint.pt is the most robust traning
 
 logging:
-  log_dir: "runs/emotion_classifier_exp3/" #this is a unique folder for the training. when it reruns it overrides and deletes the log file so update it as needed.
-  run_label: "hubert_2MLP_0Enc_wnoisedata_domadv_cosinewrmst_D0p3" #unique id give to the training. 
+  log_dir: "runs/emotion_classifier_exp8b/" #this is a unique folder for the training. when it reruns it overrides and deletes the log file so update it as needed.
+  run_label: "hubert_2MLP_512HD_2Enc_wnoise_rand_clip_2s_0.5Drop" #unique id give to the training. 
   track_run: true #track different models trained so that we can plot them together.
   runs_config_path: "configs/model_runs.yml" #where to store info about different experimentation
   misclassified_dir: "misclassified/"
   checkpoint_dir: "checkpoints/"
-  save_misclassified: true #save misclassified audios
+  save_misclassified: false #save misclassified audios
 
-notes: "Hypothesis: Feature space is learning to identify the dataset itself and resulting in poor clustering of emotion.
- Domain Adversarial training to force the model to unlearn/forget the dataset label with negative gradient.
- HuBERT last 2 layers unfrozen. 2-layer MLP classifier, training data augmented with musan noise, amplitude/Gain noise, time stretching  
- 50 epochs, batch_size 8, lr: 0.0001, max_lr: 0.003, grl_lambda 1, 
+notes: "Hypothesis: still has trouble seperating certain emotional states so let's use triplet loss at the output of the encoder, this will 
+ train the HuBERT model to better separate the emotions with weight of 1. Let's try reverting the input data raondmoly for half of the case.. increasing the latent dimension size of the classifier to 512D
+ Domain Adversarial training with lambda =0. Tiplet loss added with eight 0.5 and classification weight 1
+ Only 1 HuBERT encoder layer unfroozen, aggressive dropout 0.6.
+ HuBERT's output is SpecAugmented with random time and frequency masking
+ training data augmented with musan noise, amplitude/Gain noise, time stretching   
+ 2-layer MLP classifier, 
+ 30 epochs, batch_size 8, lr: 0.0001, max_lr: 0.003, grl_lambda 3, dropout 0.5
  "

@@ -5,5 +5,21 @@ runs:
   log_dir: runs/emotion_classifier_exp1/
 - label: hubert_2MLP_0Enc_wnoisedata_cosinewrmst_D0p3
   log_dir: runs/emotion_classifier_exp2/
-- label: hubert_2MLP_0Enc_wnoisedata_domadv_cosinewrmst_D0p3
+- label: hubert_2MLP_3Enc_wnoisedata_domadv_randomclipping
   log_dir: runs/emotion_classifier_exp3/
+- label: hubert_2MLP_2Enc_wnoise_dom_adv_rand_clip_2s_0.6Drop
+  log_dir: runs/emotion_classifier_exp4/
+- label: hubert_2MLP_2Enc_wnoise_dom_adv_rand_clip_2s_0.6Drop
+  log_dir: runs/emotion_classifier_exp5/
+- label: hubert_2MLP_2Enc_wnoise_rand_clip_2s_0.5Drop
+  log_dir: runs/emotion_classifier_exp5b/
+- label: hubert_2MLP_512HD_2Enc_wnoise_rand_clip_2s_0.5Drop
+  log_dir: runs/emotion_classifier_exp6/
+- label: hubert_2MLP_512HD_2Enc_wnoise_rand_clip_2s_0.5Drop
+  log_dir: runs/emotion_classifier_exp6b/
+- label: hubert_13MLP_512HD_2Enc_wnoise_rand_clip_2s_0.5Drop
+  log_dir: runs/emotion_classifier_exp7/
+- label: hubert_2MLP_512HD_2Enc_wnoise_rand_clip_2s_0.5Drop
+  log_dir: runs/emotion_classifier_exp8/
+- label: hubert_2MLP_512HD_2Enc_wnoise_rand_clip_2s_0.5Drop
+  log_dir: runs/emotion_classifier_exp8b/
