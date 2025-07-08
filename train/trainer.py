@@ -184,7 +184,7 @@ def train_model(model, train_loader, val_loader, config, run_name, resume_traini
 
             # Combine the losses
             # If triplet_loss_weight is 0, it effectively just uses classification loss
-            loss_both_classifier = (classification_loss_weight * emotion_loss) + (triplet_loss_weight * triplet_loss)
+            loss_both_classifier = (classification_loss_weight * emotion_loss) + (triplet_loss_weight * triplet_loss)+ alpha * domain_loss
 
             #loss_both_classifier = emotion_loss + alpha * domain_loss
 
