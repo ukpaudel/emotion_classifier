@@ -8,11 +8,18 @@ import sounddevice as sd
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from collections import deque, Counter
-from transformers import Wav2Vec2ForCTC, Wav2Vec2Processor
 import os
 from utils.emotion_labels import EMOTION_MAP
 
+'''
+This is a demo code that takes a real time audio and does ASR and emotion classification.
+>cd emotion_classifier 
+> python inference/realtime_inference_withASR.py 
+if you run into issue, make sure your package is indexed as a packaged. perform
+>pip install -e . from the root emotion_classifer folder
 
+
+'''
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 def resolve_class(class_path_or_callable):
@@ -34,14 +41,15 @@ def load_model_from_config(config_path):
 
 class RealTimeEmotionAndASR:
     def __init__(self, emotion_model, sample_rate, device):
+        self.device_audio = 12 #SPECIFY THIS. TODO LOAD FROM .yml
         self.device = device
         self.emotion_model = emotion_model.to(self.device)
-        self.sample_rate = sample_rate
+        self.sample_rate = sample_rate # This is your emotion model's sample rate
         
         self.emotion_window_sec = 3.0 
         self.emotion_window_samples = int(self.emotion_window_sec * sample_rate)
         
-        self.asr_window_sec = 3.0
+        self.asr_window_sec = 7.0
         self.asr_window_samples = int(self.asr_window_sec * sample_rate)
 
         self.buffer = np.zeros(self.asr_window_samples, dtype=np.float32)
@@ -53,14 +61,22 @@ class RealTimeEmotionAndASR:
         self.total_samples_seen = 0
         self.samples_since_last_classify = 0
         
-        # Load ASR model
-        self.asr_processor = Wav2Vec2Processor.from_pretrained("facebook/wav2vec2-large-960h-lv60-self")
-        print(f"[ASR] Processor loaded: {self.asr_processor}")
-        self.asr_model = Wav2Vec2ForCTC.from_pretrained("facebook/wav2vec2-large-960h-lv60-self").to(self.device)
+        # Load ASR model using torchaudio.pipelines
+        self.asr_bundle = torchaudio.pipelines.WAV2VEC2_ASR_LARGE_LV60K_960H
+        self.asr_model = self.asr_bundle.get_model().to(self.device)
         self.asr_model.eval()
+
+        # Get ASR labels from the bundle (ESSENTIAL)
+        self.asr_labels = self.asr_bundle.get_labels()
+        # No need to instantiate CTCDecoder here, we'll do greedy decoding manually
+        
+        self.asr_sample_rate = self.asr_bundle.sample_rate # Get ASR model's sample rate from bundle
+
         self.current_text = ""
 
         print(f"[INFO] Using device: {self.device}")
+        print(f"[INFO] ASR Model Sample Rate: {self.asr_sample_rate} Hz")
+
 
         self.current_probs = np.zeros(len(EMOTION_MAP))
         self.current_emotion = "Neutral"
@@ -68,9 +84,9 @@ class RealTimeEmotionAndASR:
         self.need_classify = False
 
         # --- Plotting Configuration ---
-        self.downsample_factor = 50 # Re-introduced for visual clarity of raw waveform
-        self.use_envelope_plot = False # Set to False for downsampled raw waveform
-        self.envelope_smoothing_window = int(sample_rate * 0.01) # 10ms for smoothing
+        self.downsample_factor = 50 
+        self.use_envelope_plot = False 
+        self.envelope_smoothing_window = int(sample_rate * 0.01) 
 
         # Plot setup
         self.fig, (self.ax_bar, self.ax_wave) = plt.subplots(2, 1, figsize=(10, 6))
@@ -80,14 +96,14 @@ class RealTimeEmotionAndASR:
         self.ax_bar.set_ylim(0, 1)
         self.ax_bar.set_ylabel("Probability")
         self.ax_bar.set_title("Real-time Emotion Probabilities")
-        self.ax_bar.tick_params(axis='x', rotation=45) # ha='right' was the error, changed back to original for comment
+        self.ax_bar.tick_params(axis='x', rotation=45)
 
         # Waveform plot
         self.wave_line, = self.ax_wave.plot([], [], lw=1, color='darkblue')
         self.ax_wave.set_title("Rolling Waveform with Emotion & ASR")
         self.ax_wave.set_xlabel("Time (seconds)")
         self.ax_wave.set_xlim(0, self.asr_window_sec) 
-        self.ax_wave.set_ylim(-1.0, 1.0) 
+        self.ax_wave.set_ylim(-0.5, 0.5) 
 
         # Pinned emotion text
         self.emotion_text_handle = self.ax_wave.text(
@@ -109,11 +125,6 @@ class RealTimeEmotionAndASR:
         if status:
             print(status)
         samples = indata[:, 0]
-        
-        # Normalize incoming samples to [-1, 1] range if needed
-        #max_abs_val = np.max(np.abs(samples))
-        #if max_abs_val > 0:
-        #    samples = samples / max_abs_val
         
         self.buffer = np.roll(self.buffer, -len(samples))
         self.buffer[-len(samples):] = samples
@@ -138,13 +149,35 @@ class RealTimeEmotionAndASR:
             return
 
         # ASR Processing
-        inputs = self.asr_processor(current_buffer_segment, return_tensors="pt", sampling_rate=self.sample_rate)
-        input_values = inputs.input_values.to(self.device)
-        with torch.no_grad():
-            logits = self.asr_model(input_values).logits
+        waveform = torch.from_numpy(current_buffer_segment).unsqueeze(0).to(self.device)
+
+        # Resample if needed to ASR model's sample rate
+        if self.sample_rate != self.asr_sample_rate:
+            waveform = torchaudio.functional.resample(waveform, self.sample_rate, self.asr_sample_rate)
+
+        with torch.inference_mode():
+            emissions, _ = self.asr_model(waveform)
         
-        pred_ids = torch.argmax(logits, dim=-1)
-        transcription = self.asr_processor.decode(pred_ids[0])
+        # --- Manual Greedy CTC Decoding ---
+        # Get the predicted token IDs by taking the argmax of emissions
+        predicted_ids = torch.argmax(emissions[0], dim=-1).cpu().numpy() # emissions[0] for the single batch item
+
+        transcription_tokens = []
+        blank_idx = 0 # Assuming blank token is at index 0 for Wav2Vec2 bundle (common)
+
+        for i, token_id in enumerate(predicted_ids):
+            if token_id == blank_idx:
+                continue # Skip blank tokens
+            
+            # Remove consecutive duplicates
+            if i > 0 and token_id == predicted_ids[i-1]:
+                continue
+            
+            transcription_tokens.append(self.asr_labels[token_id])
+        
+        transcription = "".join(transcription_tokens).replace("|", " ").strip()
+        # --- End Manual Greedy CTC Decoding ---
+
         self.current_text = transcription.strip()
         print(f"[ASR] {self.current_text}")
 
@@ -154,8 +187,8 @@ class RealTimeEmotionAndASR:
         lengths = torch.tensor([self.emotion_window_samples]).to(self.device) 
         
         with torch.no_grad():
-            output = self.emotion_model(waveform, lengths)
-            probs = F.softmax(output, dim=-1)
+            logits_emotion, logits_domain, pooled_encoder_features = self.emotion_model(waveform, lengths)
+            probs = F.softmax(logits_emotion, dim=-1)
             
         self.current_probs = probs.squeeze().cpu().numpy()
         majority_class_idx = torch.argmax(probs, dim=-1).item()
@@ -228,7 +261,7 @@ class RealTimeEmotionAndASR:
                 channels=1,
                 samplerate=self.sample_rate,
                 blocksize=self.step_size,
-                device=3 # change if needed, use sd.query_devices() to list
+                device=self.device_audio
             ):
                 print(f"[INFO] Starting audio stream. Recording at {self.sample_rate} Hz.")
                 print(f"[INFO] Buffer size: {self.asr_window_sec} seconds. Classifying every {self.classify_interval_sec} seconds.")
@@ -237,7 +270,7 @@ class RealTimeEmotionAndASR:
                 plt.show()
         except Exception as e:
             print(f"[ERROR] An error occurred during audio stream: {e}")
-            print("Please ensure your audio device is correctly selected (device=3) and available.")
+            print("Please ensure your audio device is correctly selected and available.")
             print("You can list available devices using: python -m sounddevice")
 
 

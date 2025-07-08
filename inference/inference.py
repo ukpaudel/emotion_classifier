@@ -1,11 +1,16 @@
+import sys
+import os
+#sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 import torch
 import torchaudio
 import importlib
 import yaml
 import torch.nn.functional as F
-import os
 import numpy as np
 from utils.emotion_labels import EMOTION_MAP
+
+
 
 '''
 This file passes example data recorded at home and use it for inference.
@@ -54,8 +59,8 @@ def predict(model, waveform):
         waveform = waveform.mean(dim=0, keepdim=True)  # shape: (1, num_samples)
 
     with torch.no_grad():
-        output = model(waveform, lengths)
-        probs = F.softmax(output, dim=-1)
+        logits_emotion, logits_domain, pooled_encoder_features = model(waveform, lengths)
+        probs = F.softmax(logits_emotion, dim=-1)
         pred_idx = torch.argmax(probs, dim=-1).item()
     return pred_idx, probs.squeeze().tolist()
 

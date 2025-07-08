@@ -23,3 +23,11 @@ runs:
   log_dir: runs/emotion_classifier_exp8/
 - label: hubert_2MLP_512HD_2Enc_wnoise_rand_clip_2s_0.5Drop
   log_dir: runs/emotion_classifier_exp8b/
+- label: wavlm_2MLP_256HD_froozenEnc_wnoise_rand_clip_2s_0.5Drop
+  log_dir: runs/emotion_classifier_exp9/
+- label: wavlm_2MLP_256HD_1Enc_wnoise_rand_clip_2s_0.5Drop
+  log_dir: runs/emotion_classifier_exp9b/
+- label: wavlm_2MLP_256HD_1Enc_wnoise_rand_clip_2s_0.5Drop
+  log_dir: runs/emotion_classifier_exp9c/
+- label: wavlm_2MLP_256HD_2Enc_wnoise_rand_clip_2s_0.5Drop
+  log_dir: runs/emotion_classifier_exp9d/

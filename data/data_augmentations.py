@@ -102,26 +102,32 @@ def apply_augmentations(waveform: torch.Tensor, sample_rate: int, noise_file_pat
 
 
 # --- 1. Apply waveform-based augmentations ---
+    # --- Revert (time) ---
+    if random.random() < 0.5: # 20% chance to apply gain
+        gain_db = random.uniform(-6, 6) # Random gain between -6dB and +6dB
+        vol_transform = T.Vol(gain=gain_db, gain_type="db").to(device)
+        waveform = torch.flip(waveform, dims=[-1])
+
 
     # --- Gain (Volume) ---
-    if random.random() < 0.2: # 50% chance to apply gain
+    if random.random() < 0.5: # 50% chance to apply gain
         gain_db = random.uniform(-6, 6) # Random gain between -6dB and +6dB
         vol_transform = T.Vol(gain=gain_db, gain_type="db").to(device)
         waveform = vol_transform(waveform)
 
-    # # --- Pitch Shift ---
-    if random.random() < 0.1: # 10% chance to apply pitch shift
-        try:
-            n_steps = random.uniform(-4, 4) # Shift pitch by -4 to +4 semitones
-            pitch_shifter = T.PitchShift(sample_rate, n_steps).to(device)
-            waveform = pitch_shifter(waveform)
-        except Exception as e:
-            # Handle cases where PitchShift might not be fully supported or cause issues
-            print(f"Warning: Could not apply PitchShift: {e}. Skipping.")
-            pass # Continue without this augmentation
+    # # # --- Pitch Shift ---
+    # if random.random() < 0.0: # 10% chance to apply pitch shift
+    #     try:
+    #         n_steps = random.uniform(-4, 4) # Shift pitch by -4 to +4 semitones
+    #         pitch_shifter = T.PitchShift(sample_rate, n_steps).to(device)
+    #         waveform = pitch_shifter(waveform)
+    #     except Exception as e:
+    #         # Handle cases where PitchShift might not be fully supported or cause issues
+    #         print(f"Warning: Could not apply PitchShift: {e}. Skipping.")
+    #         pass # Continue without this augmentation
 
     # --- Noise from MUSAN (Crackle/Microphone Noise) ---
-    if noise_file_paths_map and any(noise_file_paths_map.values()) and random.random() < 0.3:
+    if noise_file_paths_map and any(noise_file_paths_map.values()) and random.random() < 0.6:
         try:
             noise_categories = ['noise', 'speech', 'music']
             #selected_category = random.choice(noise_categories)
@@ -156,8 +162,8 @@ def apply_augmentations(waveform: torch.Tensor, sample_rate: int, noise_file_pat
     # --- 2. Apply Spectrogram-based augmentations (e.g., Time Stretch) in GPU ---
     # TimeStretch requires a complex-valued spectrogram input.
     # We'll convert to spectrogram, apply stretch, then convert back to waveform.
-    if random.random() < 0.05: # 5% chance to apply time stretch
-        stretch_rate = random.uniform(0.8, 1.2) 
+    if random.random() < 0.6: # 60% chance to apply time stretch
+        stretch_rate = random.uniform(0.6, 1.5) 
         n_fft = 1024
         hop_length = n_fft // 4 
         n_freq = n_fft // 2 + 1 # This calculates 1025 for n_fft=2048
@@ -182,9 +188,34 @@ def apply_augmentations(waveform: torch.Tensor, sample_rate: int, noise_file_pat
             complex_spectrogram = spectrogram_transform(waveform) # Input (waveform) is already on GPU
             stretched_complex_spectrogram = time_stretcher(complex_spectrogram, stretch_rate)
             waveform = inverse_spectrogram_transform(stretched_complex_spectrogram)
+            #print('Waveform time stretched')
             
         except Exception as e:
             print(f"Warning: Error applying TimeStretch: {e}. Skipping.")
             pass 
+
+    # --- Random Cropping if longer than 3 seconds random center window of 3 sec---
+    
+    max_length_sec = 2.0
+    crop_amount_sec = random.uniform(1.0, 2.0)  # randomly 1-2 seconds to crop
+    total_samples = waveform.shape[-1]
+    max_length_samples = int(max_length_sec * sample_rate)
+    crop_amount_samples = int(crop_amount_sec * sample_rate)
+
+    if total_samples > max_length_samples:
+        crop_start = random.randint(0, total_samples - max_length_samples)
+        waveform = waveform[:, crop_start: crop_start + max_length_samples]
+        #randomly clip the beginning or the end of the sound.
+        # # Decide randomly to crop from the beginning or the end
+        # if random.random() < 0.5:
+        #     # crop from the beginning
+        #     start = crop_amount_samples
+        #     end = total_samples
+        # else:
+        #     # crop from the end
+        #     start = 0
+        #     end = total_samples - crop_amount_samples
+        # waveform = waveform[:, start:end]
+
 
     return waveform # The augmented is now on the GPU

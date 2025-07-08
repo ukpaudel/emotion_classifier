@@ -3,7 +3,7 @@ import torch
 import torchaudio
 import torchaudio.transforms as T
 from torch.utils.data import Dataset
-from emotion_classifier.utils.add_noise_snr import _add_noise_with_snr
+from utils.add_noise_snr import _add_noise_with_snr
 import random
 from tqdm import tqdm
 from .data_augmentations import apply_augmentations 
@@ -16,6 +16,7 @@ class CREMADataset(Dataset):
         self.dir_link = dir_link
         self.sample_rate = sample_rate
         self.noise_dir = noise_dir
+        self.dataset_name = 'cremad'
         self.error_log_path = os.path.join(dir_link, "bad_files.log")
         os.makedirs(os.path.dirname(self.error_log_path), exist_ok=True)
         self.actor_ids = [] 
@@ -109,10 +110,12 @@ class CREMADataset(Dataset):
             # Apply augmentations only if in training mode
             if self.is_train:
                 # Call the external augmentation function
+                #TODO Kwargs for the data augmentation
+                #waveform = waveform
                 waveform = apply_augmentations(waveform, self.sample_rate,  self.noise_file_paths_map, device)
             # Return the processed waveform (now on GPU) and label
             # The .squeeze(0) converts [1, N] to [N] if needed
-            return waveform.squeeze(0).detach(), emotion
+            return waveform.squeeze(0).detach(), emotion, self.dataset_name
 
         except Exception as e:
             tqdm.write(f'Error with file {file}, error: {e}') 

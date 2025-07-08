@@ -22,6 +22,7 @@ executing==2.0.1
 filelock==3.14.0
 fonttools==4.53.1
 fsspec==2025.5.1
+flashlight-text
 gmpy2==2.2.0rc1
 grpcio==1.73.1
 hf-xet==1.1.5
@@ -38,6 +39,7 @@ joblib==1.5.1
 jupyter_client==8.6.1
 jupyter_core==5.7.2
 kiwisolver==1.4.5
+KenLM
 Markdown==3.8.2
 MarkupSafe==2.1.5
 matplotlib==3.10.0
@@ -81,6 +83,7 @@ seaborn==0.13.2
 sip==6.8.0
 six==1.16.0
 soundfile==0.13.1
+sounddevice
 stack_data==0.6.3
 sympy==1.13.1
 tensorboard==2.19.0

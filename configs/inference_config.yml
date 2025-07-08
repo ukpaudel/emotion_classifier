@@ -1,11 +1,13 @@
 model:
-  class_path: emotion_classifier.models.emotion_model.EmotionModel
-  checkpoint_path: runs\emotion_classifier_v18\hubert_2MLP_3Enc_noisedata_cosinewrmst_D0p3\checkpoint.pt
+  class_path: models.emotion_model.EmotionModel
+  checkpoint_path: "runs/emotion_classifier_exp8/hubert_2MLP_512HD_2Enc_wnoise_rand_clip_2s_0.5Drop/checkpoint.pt"
   sample_rate: 16_000
   args:
     encoder_name: hubert
-    dropout: 0.3
-    hidden_dim: 256
+    dropout: 0.5
+    hidden_dim: 512
     num_classes: 8
     freeze_encoder: true
-    unfreeze_last_n_layers: 3
+    unfreeze_last_n_layers: 2
+    num_domains: 2 #datasets used for training
+    grl_lambda: 1 #adverserial learning rate
